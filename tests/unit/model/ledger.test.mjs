@@ -457,3 +457,50 @@ describe('isTerminal', () => {
     expect(isTerminal(undefined)).toBe(false);
   });
 });
+
+describe('invariants that had no test until coverage said so', () => {
+  /**
+   * These three branches existed in checkLedgerInvariants and were never
+   * exercised. An unproven check is the same failure mode as a
+   * configured-but-inert lint rule: it creates confidence without providing
+   * any, and this project has already been bitten by that once.
+   *
+   * @param {Partial<import('../../../src/core/model/review.mjs').LedgerReview>} overrides
+   * @returns {string[]}
+   */
+  function violationsWith(overrides) {
+    const ledger = ledgerWithOne();
+    const records = new Map(ledger.records);
+    records.set('a'.repeat(32), { ...requireRecord(ledger, 'a'.repeat(32)), ...overrides });
+
+    return checkLedgerInvariants({ ...ledger, records });
+  }
+
+  it('catches a revision below 1', () => {
+    // Revision 0 means the record was created without an INSERT ever running.
+    expect(violationsWith({ revision: 0 })).toContainEqual(expect.stringContaining('below 1'));
+  });
+
+  it('catches a negative missing streak', () => {
+    // A negative streak means something decremented it. Nothing may: absence
+    // increments, presence resets to zero, and there is no third operation.
+    expect(violationsWith({ missing_streak: -1 })).toContainEqual(
+      expect.stringContaining('negative'),
+    );
+  });
+
+  it('catches first_seen_at after last_seen_at', () => {
+    // Time running backwards for a record means first_seen_at was overwritten,
+    // which is exactly what PT-05 forbids.
+    expect(violationsWith({ first_seen_at: '2027-01-01T00:00:00.000Z' })).toContainEqual(
+      expect.stringContaining('after last_seen_at'),
+    );
+  });
+
+  it('reports every violation, not just the first', () => {
+    // The Gate returns all reasons rather than short-circuiting, and this
+    // follows the same rule: an operator fixing one problem should see the
+    // other three in the same pass.
+    expect(violationsWith({ revision: 0, missing_streak: -1 }).length).toBeGreaterThanOrEqual(2);
+  });
+});

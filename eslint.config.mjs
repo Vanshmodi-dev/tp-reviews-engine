@@ -233,11 +233,13 @@ export default [
               message:
                 'DR-2 / TR-DEP-002: core/ may import node:crypto and nothing else. No fs, no path, no process. Pass the value in as an argument.',
             },
-            {
-              group: ['*', '!./*', '!../*', '!../../*', '!../../../*'],
-              message:
-                'DR-1: core/ has zero package dependencies. Nothing on npm satisfies the purity rule.',
-            },
+            // "core/ imports no npm package" is NOT expressed here. The
+            // gitignore-style pattern that would say it (`*` with relative
+            // negations) also matches `node:crypto` and `./result.mjs`, so it
+            // rejected two legal imports on their first use. Specifier
+            // classification needs real resolution, which is what the PH-07
+            // architecture test does - and LINT-04 already establishes that
+            // the two mechanisms are deliberately different in strength.
           ],
         },
       ],

@@ -1,0 +1,78 @@
+name: Selector break
+description: Extraction is failing or returning wrong values because the source markup changed.
+title: '[selector] '
+labels: ['selector-break']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **A merged selector pack is never edited.** A change creates `v<n+1>.json`, and the
+        old pack is retained indefinitely so that fixtures captured under it keep being
+        tested against it. Editing a pack in place silently rewrites what every historical
+        fixture is asserting, which is how a corpus stops testing extraction and starts
+        testing today's markup.
+
+  - type: dropdown
+    id: detected-by
+    attributes:
+      label: Detected by
+      options:
+        - Canary assertion on the reference listing
+        - Golden fixture regression test
+        - Coverage or validation threshold in a real run
+        - Someone looked at a client site
+    validations:
+      required: true
+
+  - type: input
+    id: pack
+    attributes:
+      label: Current pack version
+      placeholder: selectors/google-maps/v3.json
+    validations:
+      required: true
+
+  - type: textarea
+    id: fields
+    attributes:
+      label: Which fields broke
+      description: Per field, say whether it is missing entirely or present but wrong.
+      placeholder: |
+        rating   - present but always 0
+        author   - missing
+        text     - unaffected
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: What happens to a harvest right now
+      description: >-
+        A wrong value is worse than a missing one. A missing field lowers coverage and the
+        Publish Gate holds the payload; a wrong value can pass every threshold and reach a
+        visitor looking entirely plausible.
+      options:
+        - 'Coverage drops — the Gate holds publication'
+        - 'Values are wrong but plausible — the Gate may NOT catch this'
+        - 'Extraction fails completely'
+    validations:
+      required: true
+
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Fixture
+      description: >-
+        Name the fixture case capturing the new markup. Capture with
+        `scripts/capture-fixture.mjs` — trimmed to the review subtree and sanitised. Do not
+        paste raw captured markup into this issue.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have NOT edited an existing pack in place
+          required: true
+        - label: A fixture reproducing this exists, or I have said why not

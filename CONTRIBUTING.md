@@ -113,3 +113,83 @@ zero dependencies and that is non-negotiable — it ships to client websites.
 ## Reporting a Security Issue
 
 Do not open a public issue. See [SECURITY.md](SECURITY.md).
+
+## Commits
+
+Conventional Commits, enforced by the `commit-msg` hook and re-checked in CI on
+the pull request title, because `main` squash-merges and the title becomes the
+commit. `release.yml` reads these to build the release notes, so the format is
+load-bearing rather than decorative.
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+| Element  | Rule                                                                     |
+| -------- | ------------------------------------------------------------------------ |
+| Type     | `feat` `fix` `test` `refactor` `chore` `docs` `ci` `perf` `build`        |
+| Scope    | The module path fragment: `core/reconcile`, `adapters/browser`, `ci`     |
+| Subject  | Imperative, ≤ 72 characters, no trailing period                          |
+| Body     | Required for D3 and above. States the TRD section and what was verified. |
+| Footer   | `Refs:` with `TR-`, `EDR-`, `INV-`, `PT-`, `CH-` identifiers             |
+| Breaking | `!` after the scope, plus a `BREAKING CHANGE:` footer                    |
+
+```
+fix(core/reconcile): stop treating a capped harvest as a removal signal
+
+A harvest that stopped at max_reviews is not evidence of absence. Removal
+confirmations are now only incremented when completeness is `full`.
+
+Verified: PT-07 fails on the previous behaviour and passes on this one.
+
+Refs: TR-REC-041, PT-07, INV-04
+```
+
+**Write the body for anything non-trivial.** The subject says what changed; the
+body is the only place the _reason_ survives, and in six months the reason is
+the part anyone actually needs.
+
+## Branches
+
+| Purpose                                           | Pattern              | Example                              |
+| ------------------------------------------------- | -------------------- | ------------------------------------ |
+| Task                                              | `t/<task-id>-<slug>` | `t/147-identity-hash`                |
+| Phase (rare; a coordinated interface change only) | `ph/<phase>-<slug>`  | `ph/07-ports`                        |
+| Fix                                               | `fix/<issue>-<slug>` | `fix/212-rating-cascade`             |
+| Chore                                             | `chore/<slug>`       | `chore/bump-playwright`              |
+| Machine-owned                                     | `data`, `state`      | Never created by a human after setup |
+
+The task id in the branch name is what makes progress tracking automatic: a
+merged branch maps a commit to a task without anyone updating a spreadsheet.
+
+`main` squash-merges and keeps linear history. `data` and `state` are orphan
+branches written only by the engine — never branch from them, never merge into
+them, never rebase them.
+
+## Git Hooks
+
+```sh
+npm run hooks:install   # idempotent; run it once after cloning
+```
+
+| Hook         | Budget  | Runs                                   |
+| ------------ | ------- | -------------------------------------- |
+| `pre-commit` | < 3 s   | Prettier and ESLint, staged files only |
+| `commit-msg` | < 0.2 s | Conventional Commit format             |
+| `pre-push`   | < 45 s  | `typecheck` plus the fast suites       |
+
+**The budget is the design constraint, not a target.** A hook slower than its
+budget gets bypassed with `--no-verify`, and that bypass disables _every_ hook
+including `commit-msg`. If a hook starts exceeding its budget, that is a defect
+in the hook.
+
+`--no-verify` is not forbidden — there are legitimate uses — but it is not
+silent either. Report it at stand-up (HOOK-02).
+
+Hooks are an accelerator, never an authority. CI re-runs everything they run, so
+a contributor without hooks installed is still blocked by the same gates
+(HOOK-04).

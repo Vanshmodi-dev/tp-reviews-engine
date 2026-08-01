@@ -1,0 +1,27 @@
+# TP Reviews Engine - Git attributes
+#
+# TR-BLD-002  .gitattributes MUST enforce `text eol=lf` for all text files.
+#             A CRLF line ending in a JSON payload changes its bytes and
+#             therefore its content hash, silently breaking hash-gating on
+#             Windows checkouts.
+# INIT-01     This is the first file committed to the repository. A file
+#             committed before this rule may carry CRLF permanently.
+# IR-07       Line-ending drift on a Windows development machine breaks the
+#             byte-determinism that change detection depends on. The symptom
+#             is a ~50x multiplication of commit churn, months later.
+#
+# Attribute matching is last-match-wins, so the catch-all is declared first
+# and every override follows it.
+
+* text=auto eol=lf
+
+# Binary artifacts. `binary` is the built-in macro for `-text -diff`: these
+# are never line-ending normalised and never diffed as text. Diagnostics
+# screenshots must be stored byte-for-byte as captured. (IMPL PLAN 12.1)
+*.png   binary
+*.jpg   binary
+*.woff2 binary
+
+# Captured page fixtures are data, not source. Excluding them from language
+# statistics keeps those statistics meaningful. (IMPL PLAN 12.1)
+fixtures/**/*.html linguist-vendored

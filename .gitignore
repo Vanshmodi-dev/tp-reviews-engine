@@ -1,0 +1,49 @@
+# TP Reviews Engine - ignored paths
+#
+# TR-BLD-003  .gitignore MUST exclude .state/, .publish/, .artifacts/,
+#             node_modules/, .env, and Playwright's browser cache directory.
+#
+# Every path below is machine-generated. The three engine working directories
+# are branch checkouts and run output; committing one onto main would put
+# internal state or published payloads into source history.
+
+# --- Engine working directories (TRD 9.3 path variables) ---
+
+# TPRE_STATE_DIR - checkout of the `state` orphan branch
+.state/
+
+# TPRE_PUBLISH_DIR - checkout of the `data` orphan branch
+.publish/
+
+# TPRE_ARTIFACT_DIR - logs, run manifests, diagnostics bundles
+.artifacts/
+
+# --- Dependencies ---
+
+node_modules/
+
+# --- Secrets ---
+# .env is read only when TPRE_ENV=development (TRD 9.8) and holds real values.
+# .env.example is committed, documents every variable, and holds none.
+.env
+.env.*
+!.env.example
+
+# --- Playwright browser cache ---
+# The default cache lives outside the repository (~/.cache/ms-playwright on
+# Linux). These entries cover a PLAYWRIGHT_BROWSERS_PATH pointed inside the
+# working tree, plus Playwright's own report and result output.
+.playwright/
+ms-playwright/
+playwright-report/
+test-results/
+
+# --- Test and tooling output ---
+
+coverage/
+
+# --- OS and editor noise ---
+
+.DS_Store
+Thumbs.db
+*.swp

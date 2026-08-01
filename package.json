@@ -19,7 +19,7 @@
     "lint:fix": "node -e \"console.error('lint:fix: not yet implemented. Lands in IMPL PLAN section 19 (T-026).')\"",
     "format": "node -e \"console.error('format: not yet implemented. Lands in IMPL PLAN section 20 (T-034).')\"",
     "format:check": "node -e \"console.error('format:check: not yet implemented. Lands in IMPL PLAN section 20 (T-034).')\"",
-    "typecheck": "node -e \"console.error('typecheck: not yet implemented. Lands in IMPL PLAN section 18 (T-023).')\"",
+    "typecheck": "tsc -p jsconfig.json",
     "test": "node -e \"console.error('test: not yet implemented. Lands in IMPL PLAN section 21 (T-037).')\"",
     "test:coverage": "node -e \"console.error('test:coverage: not yet implemented. Lands in IMPL PLAN section 21 (T-039).')\"",
     "test:live": "node -e \"console.error('test:live: not yet implemented. Lands in PH-19.')\"",
@@ -28,5 +28,16 @@
     "validate:schemas": "node -e \"console.error('validate:schemas: not yet implemented. Lands in PH-09; runs scripts/validate-all.mjs.')\"",
     "fixtures:serve": "node -e \"console.error('fixtures:serve: not yet implemented. Lands in PH-15; runs fixtures/server/serve.mjs.')\"",
     "parse:fixture": "node -e \"console.error('parse:fixture: not yet implemented. Lands in PH-13.')\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.2",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.8.0",
+    "fast-check": "^4.9.0",
+    "globals": "^17.8.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }

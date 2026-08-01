@@ -51,19 +51,40 @@ const tpre = {
         },
       },
       create(context) {
-        // Statement-shaped: opens a block, closes one, or starts with a keyword
-        // that cannot begin an English sentence in this codebase.
-        const CODE_SHAPED =
-          /^\s*(?:(?:const|let|var|function|class|import|export|return|await|throw|else|case)\b|[})\]]\s*[;,]?\s*$|.*[;{]\s*$)/u;
+        // Three independent shapes, because one regex covering all of them was
+        // too eager: it flagged ordinary prose that happened to end in a
+        // semicolon. A JSDoc continuation marker is stripped first, so the
+        // heuristic sees the text rather than the comment syntax.
+        const KEYWORD_START =
+          /^(?:const|let|var|function|class|import|export|return|await|throw|else|case|if|for|while|switch|try|catch|new|delete)\b/u;
+        const CLOSER_ONLY = /^[})\]]+\s*[;,]?$/u;
+        const STATEMENT_END = /[;{]$/u;
+        const CODE_CHARS = /[=(){}[\]]/u;
+        const MIN_LENGTH = 4;
+
+        // A keyword alone is not evidence either: English sentences begin
+        // with "for", "if", "class", "return" and "new". Code-shaped means a
+        // keyword or a statement terminator TOGETHER with syntax English does
+        // not use - a bracket, a brace, or an assignment.
+        const isCodeShaped = (text) => {
+          if (CLOSER_ONLY.test(text)) return true;
+
+          const keyword = KEYWORD_START.test(text);
+          const terminated = STATEMENT_END.test(text);
+          const syntax = CODE_CHARS.test(text);
+
+          return (keyword && (terminated || syntax)) || (terminated && syntax);
+        };
 
         return {
           Program() {
             for (const comment of context.sourceCode.getAllComments()) {
               if (comment.type === 'Shebang') continue;
-              for (const line of comment.value.split('\n')) {
-                if (line.trim().length < 4) continue;
-                if (line.trim().startsWith('@')) continue; // JSDoc tag
-                if (CODE_SHAPED.test(line)) {
+              for (const raw of comment.value.split('\n')) {
+                const text = raw.replace(/^\s*\*\s?/u, '').trim();
+                if (text.length < MIN_LENGTH) continue;
+                if (text.startsWith('@')) continue;
+                if (isCodeShaped(text)) {
                   context.report({ node: comment, messageId: 'commented' });
                   break;
                 }

@@ -1,0 +1,4 @@
+# Ledger JSON is pretty-printed with stable key order and compared across runs.
+# A CRLF checkout makes every file differ from what the engine wrote.
+
+* text=auto eol=lf

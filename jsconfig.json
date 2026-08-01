@@ -1,0 +1,61 @@
+{
+  // TP Reviews Engine - type checking without a build step.
+  //
+  // EDR-008 / ADR-004: JSDoc-typed .mjs checked with checkJs. The code that
+  // runs is the code that was committed; there is no transpiler and no bundler,
+  // so a stack trace line number matches the repository.
+  //
+  // Every option below is trivially enabled on an empty tree and expensive on a
+  // populated one. That cost curve is the whole argument for setting them in
+  // week 1 (IMPL PLAN 18.2). TS-04: this must report zero errors on main at all
+  // times. A baseline of "known errors" must never be introduced.
+  "compilerOptions": {
+    // The entire point.
+    "checkJs": true,
+    "allowJs": true,
+
+    // There is no build step (NODE-02). Type checking only.
+    "noEmit": true,
+
+    // The full strict family: strictNullChecks, strictFunctionTypes,
+    // noImplicitAny, strictBindCallApply, noImplicitThis,
+    // useUnknownInCatchVariables, alwaysStrict.
+    "strict": true,
+
+    // TS-01. The single highest-value non-default option for a codebase that
+    // indexes into parsed arrays constantly - every extraction stage does.
+    "noUncheckedIndexedAccess": true,
+
+    // TS-01. Payload and ledger records distinguish "absent" from "null"
+    // meaningfully, and that distinction is part of the public contract.
+    "exactOptionalPropertyTypes": true,
+
+    // ESM .mjs resolution semantics.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+
+    // Matching the Node major pinned in .nvmrc.
+    "target": "ES2023",
+    "lib": ["ES2023"],
+
+    // jsconfig.json defaults maxNodeModuleJsDepth to 2, which combines with
+    // checkJs to type-check untyped JavaScript inside node_modules. Those
+    // findings are about other people's code, are unfixable here, and would
+    // make TS-04's zero-error rule impossible to hold. 0 confines checking to
+    // this repository; declaration files are still used.
+    "maxNodeModuleJsDepth": 0,
+
+    // Node's globals - URL, process, Buffer - and the node: built-ins.
+    "types": ["node"],
+
+    // Supporting strictness that is not part of the strict family.
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+  },
+  "include": ["src/**/*.mjs", "tests/**/*.mjs", "scripts/**/*.mjs", "frontend/**/*.mjs"],
+  "exclude": ["node_modules", ".state", ".publish", ".artifacts", "fixtures"],
+}

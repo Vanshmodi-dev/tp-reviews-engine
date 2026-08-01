@@ -25,12 +25,12 @@ just a request for a private channel — and a maintainer will open one.
 
 ### What to expect
 
-| Stage | Target |
-|---|---|
-| Acknowledgement that a human has read it | 3 business days |
-| Initial assessment, severity, and a plan | 10 business days |
-| Fix for a confirmed high-severity issue | 30 days, or an explanation of why longer |
-| Credit in the advisory and CHANGELOG | On request, by default |
+| Stage                                    | Target                                   |
+| ---------------------------------------- | ---------------------------------------- |
+| Acknowledgement that a human has read it | 3 business days                          |
+| Initial assessment, severity, and a plan | 10 business days                         |
+| Fix for a confirmed high-severity issue  | 30 days, or an explanation of why longer |
+| Credit in the advisory and CHANGELOG     | On request, by default                   |
 
 Please give us the assessment window before public disclosure. If you believe an
 issue is being actively exploited, say so — that changes the timeline.
@@ -66,16 +66,16 @@ issue is being actively exploited, say so — that changes the timeline.
 These are properties the system is built to hold. A demonstrated breach of any
 one of them is a valid, high-severity report.
 
-| Commitment | Where it lives |
-|---|---|
-| No secret appears in any file in this repository, ever, in any branch | CON-17; enforced by push protection and secret scanning |
-| Secrets are read once into a sealed object and seed the log redaction filter at that moment | TRD §48.4, TR-SEC-011 |
-| Normalisation **removes** markup rather than escaping it, before any value reaches a payload | TRD §23.3 |
-| The reference renderer uses no HTML-injection DOM API and has zero dependencies | TR-STD-001, TR-STD-002 |
-| An adapter whose required secret is missing fails closed — it never falls back to DOM acquisition | TR-SEC-010 |
-| A bot-detection challenge is terminal. No retry path exists | INV-07 |
-| Every third-party GitHub Action is pinned to a full commit SHA | TR-CI-002 |
-| No workflow uses `pull_request_target` | TR-CI-003 |
+| Commitment                                                                                        | Where it lives                                          |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| No secret appears in any file in this repository, ever, in any branch                             | CON-17; enforced by push protection and secret scanning |
+| Secrets are read once into a sealed object and seed the log redaction filter at that moment       | TRD §48.4, TR-SEC-011                                   |
+| Normalisation **removes** markup rather than escaping it, before any value reaches a payload      | TRD §23.3                                               |
+| The reference renderer uses no HTML-injection DOM API and has zero dependencies                   | TR-STD-001, TR-STD-002                                  |
+| An adapter whose required secret is missing fails closed — it never falls back to DOM acquisition | TR-SEC-010                                              |
+| A bot-detection challenge is terminal. No retry path exists                                       | INV-07                                                  |
+| Every third-party GitHub Action is pinned to a full commit SHA                                    | TR-CI-002                                               |
+| No workflow uses `pull_request_target`                                                            | TR-CI-003                                               |
 
 The full threat model is SAD §36; the security architecture is SAD §35 and
 TRD §47–§54.

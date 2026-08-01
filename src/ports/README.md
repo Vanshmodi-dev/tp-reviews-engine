@@ -17,7 +17,7 @@ change to one adapter rather than a change to the pipeline.
 
 The `acquisition` port is the one that earns the architecture. Four adapters
 implement it in v1.0 — DOM, two official APIs, and CSV — and the CSV adapter is
-deliberately built *first*, before any browser code exists, because an interface
+deliberately built _first_, before any browser code exists, because an interface
 validated against a single implementation is a rename rather than an interface.
 
 Adapters are constructed in exactly one place, `cli/composition.mjs`. Nothing

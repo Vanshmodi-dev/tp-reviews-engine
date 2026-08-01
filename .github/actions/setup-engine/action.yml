@@ -1,0 +1,53 @@
+name: Setup engine
+description: >-
+  Node, dependency cache, npm ci, and a versions banner. TR-CI-004 requires this
+  logic to exist exactly once. A Node version change must be a one-file edit,
+  not a hunt across eight workflows.
+
+inputs:
+  install:
+    description: Run `npm ci`. Set false for jobs that only need Node present.
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    # NODE-01: .nvmrc is the only place the Node version is written as a
+    # literal. This reads it rather than repeating it, which is what stops a CI
+    # upgrade from silently diverging from every developer machine.
+    - name: Set up Node
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+
+    # DEP-4: install from the committed lockfile, exactly. `npm install` in a
+    # workflow is a CI failure - it resolves ranges, which means CI can install
+    # a tree no developer has ever run.
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      run: npm ci
+
+    # The banner is how a "works locally, fails in CI" report gets diagnosed in
+    # one look at the log rather than three round trips.
+    #
+    # Browser setup is deliberately absent until PH-14 (DEP-ORD-01). Pulling a
+    # 350 MB browser cache for nine weeks, for code that does not exist, costs
+    # roughly forty minutes of CI time per week and hides the true cold-start
+    # cost at the moment it finally needs measuring.
+    - name: Versions banner
+      shell: bash
+      run: |
+        {
+          echo "### Engine environment"
+          echo ""
+          echo '| Component | Version |'
+          echo '|---|---|'
+          echo "| node (.nvmrc pin) | \`$(cat .nvmrc)\` |"
+          echo "| node (running) | \`$(node --version)\` |"
+          echo "| npm | \`$(npm --version)\` |"
+          echo "| git | \`$(git --version)\` |"
+          echo "| runner | \`${RUNNER_OS}\` \`$(nproc) cores\` |"
+        } >> "$GITHUB_STEP_SUMMARY"

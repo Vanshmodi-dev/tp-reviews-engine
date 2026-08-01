@@ -9,7 +9,7 @@ new JSON file and a one-line profile edit, not an engine release.
 
 **Why old packs are kept forever.** Fixtures captured under pack `v2` continue
 to be tested against `v2`. That is what proves the golden corpus tests
-*extraction* rather than today's markup. Delete `v2` and the corpus silently
+_extraction_ rather than today's markup. Delete `v2` and the corpus silently
 starts asserting that the parser matches whatever the site looks like now, which
 is the opposite of a regression test.
 

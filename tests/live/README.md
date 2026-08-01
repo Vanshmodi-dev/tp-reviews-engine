@@ -14,7 +14,7 @@ edited, a runner has no egress, a rate limit was hit.
 
 **Why exclusion is structural rather than a convention.** A network-dependent
 test in the blocking path trains engineers to re-run CI until it passes. Once
-that habit exists, it is applied to *every* red build, which destroys the value
+that habit exists, it is applied to _every_ red build, which destroys the value
 of every other test in the repository — including the property laws and the
 Publish Gate's coverage obligation, which are the tests the whole architecture
 is shaped around. The cost is not the flaky test; it is what the flaky test

@@ -1,0 +1,9 @@
+{
+  // Recommended, not required. A new machine picks up the toolchain
+  // automatically; nothing here is a condition of contributing.
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig"
+  ]
+}

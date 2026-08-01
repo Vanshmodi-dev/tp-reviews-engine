@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# pre-commit - budget < 3 s (HOOK-01).
+#
+# Staged files only. The budget is the design constraint, not a target: a hook
+# slower than its budget gets bypassed with --no-verify, and that bypass
+# disables EVERY hook including commit-msg. Running the full suite here would
+# make committing painful, which encourages large commits - the opposite of what
+# small reviewable changes are for.
+#
+# The tools are invoked through node_modules/.bin rather than npx. Measured on
+# Windows: npx costs 2498 ms per call against 593 ms for the binary directly,
+# because npx re-resolves the package every time. Two calls through npx put this
+# hook at 3042 ms - over budget on the very first measurement.
+#
+# HOOK-04: CI re-runs everything this runs. This is an accelerator, never an
+# authority.
+
+set -eu
+
+BIN=./node_modules/.bin
+
+if [ ! -x "$BIN/prettier" ]; then
+  echo "pre-commit: node_modules is missing or stale. Run: npm ci"
+  exit 1
+fi
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(mjs|json|md|yml)$' || true)
+
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+fail=0
+
+# shellcheck disable=SC2086 # word splitting is intended: one path per argument
+if ! "$BIN/prettier" --check $staged >/dev/null 2>&1; then
+  echo "pre-commit: formatting differs from prettier.config.mjs."
+  echo "  fix: npm run format"
+  fail=1
+fi
+
+staged_js=$(echo "$staged" | grep -E '\.mjs$' || true)
+if [ -n "$staged_js" ]; then
+  # shellcheck disable=SC2086 # word splitting is intended
+  if ! "$BIN/eslint" --max-warnings 0 $staged_js; then
+    echo "pre-commit: lint failed. Some of it may be fixable with: npm run lint:fix"
+    fail=1
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "Commit blocked. --no-verify bypasses this, and is not forbidden -"
+  echo "but report it at stand-up rather than silently (HOOK-02)."
+  exit 1
+fi

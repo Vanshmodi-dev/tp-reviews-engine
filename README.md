@@ -34,16 +34,16 @@ review source ──► scheduled harvest ──► ledger (private, `state` bra
 
 1. **The website never contacts a review source.** All acquisition is offline
    and scheduled. A visitor's browser talks to a static JSON file and nothing
-   else. *(SAD §16, ADR-001)*
+   else. _(SAD §16, ADR-001)_
 2. **Acquisition is a pluggable adapter, not the product.** Four adapters ship
-   in v1.0, so losing one is a configuration change. *(SAD §17.17, ADR-002)*
+   in v1.0, so losing one is a configuration change. _(SAD §17.17, ADR-002)_
 3. **The private Ledger and the public Payload are different things.** Every
    payload is regenerable from durable state without touching the network.
-   *(SAD §20.11, ADR-006)*
+   _(SAD §20.11, ADR-006)_
 4. **Publication is gated on invariants, not on job success.** No failure mode
-   in the system reaches a visitor. *(SAD §27.3, ADR-011)*
+   in the system reaches a visitor. _(SAD §27.3, ADR-011)_
 5. **A bot-detection challenge is a stop signal, not a puzzle.** The engine
-   never attempts to defeat anti-automation measures. *(SAD §29, ADR-010)*
+   never attempts to defeat anti-automation measures. _(SAD §29, ADR-010)_
 
 ## Read Before Using This
 
@@ -56,7 +56,7 @@ alternatives that any client can be migrated to in under an hour.
 **For any client willing to grant OAuth access to their own Google Business
 Profile, the Business Profile API adapter is strictly superior on every axis** —
 free, sanctioned, complete, and stable. The DOM adapter exists for clients who
-will not complete that grant. *(SAD §15.3.1)*
+will not complete that grant. _(SAD §15.3.1)_
 
 Every DOM-acquired listing requires a recorded written authorisation from the
 business that owns it, under `compliance/authorizations/`.
@@ -66,12 +66,12 @@ business that owns it, under `compliance/authorizations/`.
 Four baselined documents govern this repository. Start with
 [`docs/README.md`](docs/README.md).
 
-| Document | Answers |
-|---|---|
-| [AI Development Playbook](docs/TP-AI-Development-Playbook-v1.0.md) | How does TradyPerch build software? |
-| [SAD/TDD](docs/TP-Reviews-Engine-SAD-v1.0.md) | What is the system, and why? |
-| [TRD](docs/TP-Reviews-Engine-TRD-v1.0.md) | How, exactly, is it built? |
-| [Implementation Plan](docs/TP-Reviews-Engine-IMPL-PLAN-v1.0.md) | In what order, by when, verified how? |
+| Document                                                           | Answers                               |
+| ------------------------------------------------------------------ | ------------------------------------- |
+| [AI Development Playbook](docs/TP-AI-Development-Playbook-v1.0.md) | How does TradyPerch build software?   |
+| [SAD/TDD](docs/TP-Reviews-Engine-SAD-v1.0.md)                      | What is the system, and why?          |
+| [TRD](docs/TP-Reviews-Engine-TRD-v1.0.md)                          | How, exactly, is it built?            |
+| [Implementation Plan](docs/TP-Reviews-Engine-IMPL-PLAN-v1.0.md)    | In what order, by when, verified how? |
 
 Precedence: the Playbook sits above the three project documents. The SAD wins on
 architecture; the TRD wins on implementation detail; the plan governs sequencing
@@ -79,11 +79,11 @@ only. A published JSON Schema in `schemas/` beats all prose at runtime.
 
 ## Requirements
 
-| | |
-|---|---|
-| Node.js | The major pinned in [`.nvmrc`](.nvmrc) — LTS, ≥ 20 |
+|         |                                                             |
+| ------- | ----------------------------------------------------------- |
+| Node.js | The major pinned in [`.nvmrc`](.nvmrc) — LTS, ≥ 20          |
 | Modules | ESM only, `.mjs`. No transpiler, no bundler, no build step. |
-| OS | Linux x64 in production; macOS and Windows for development |
+| OS      | Linux x64 in production; macOS and Windows for development  |
 
 ## Getting Started
 
@@ -100,11 +100,11 @@ npm run verify   # lint + format:check + typecheck + test
 `main` holds source, configuration, and documentation. Two orphan branches with
 no shared history hold machine-written data:
 
-| Branch | Holds | Written By |
-|---|---|---|
-| `main` | Engine, client configs, selector packs, schemas, docs | Humans, via reviewed pull requests |
-| `data` | Published payloads. This is the static site root. | The engine only |
-| `state` | Ledgers, health series, caches, run manifests | The engine only |
+| Branch  | Holds                                                 | Written By                         |
+| ------- | ----------------------------------------------------- | ---------------------------------- |
+| `main`  | Engine, client configs, selector packs, schemas, docs | Humans, via reviewed pull requests |
+| `data`  | Published payloads. This is the static site root.     | The engine only                    |
+| `state` | Ledgers, health series, caches, run manifests         | The engine only                    |
 
 Never hand-edit `data` or `state` outside a documented recovery procedure
 (TRD §60).

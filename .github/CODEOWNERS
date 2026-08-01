@@ -1,0 +1,48 @@
+# TP Reviews Engine - code owners.
+#
+# TR-CI-005: review is required for src/core/, schemas/, selectors/, and
+# compliance/. Those four are not a seniority signal; each is a place where a
+# plausible-looking change does damage that is invisible at the diff.
+#
+# Last matching pattern wins.
+
+* @Vanshmodi-dev
+
+# --- The pure kernel ---
+# Fifteen property laws depend on these modules being deterministic. A single
+# Date.now() default parameter voids all fifteen without failing anything.
+/src/core/ @Vanshmodi-dev
+
+# The three D4/D5 modules inside it, called out separately so a reviewer knows
+# which kind of change they are looking at before they open the diff:
+#   reconcile/  absence is not deletion. The only defect that can silently
+#               wipe a paying client's reviews.
+#   normalize/  removes markup rather than escaping it. The security boundary
+#               for every client website simultaneously.
+#   gate/       decides whether anything reaches a visitor at all. 100%
+#               coverage, no short-circuit evaluation.
+/src/core/reconcile/ @Vanshmodi-dev
+/src/core/normalize/ @Vanshmodi-dev
+/src/core/gate/ @Vanshmodi-dev
+/src/core/identity/ @Vanshmodi-dev
+
+# --- The public contract ---
+# A payload schema change is visible to every client website that reads it.
+# Breaking it is not a deploy, it is a migration.
+/schemas/ @Vanshmodi-dev
+
+# --- Volatile knowledge ---
+# A merged pack is never edited; a change creates v<n+1>.json. Editing one in
+# place silently rewrites what every historical fixture is tested against.
+/selectors/ @Vanshmodi-dev
+
+# --- Authorisations and suppressions ---
+# denylist.json carries erasure obligations, and an authorisation record is the
+# evidence that a listing may be harvested at all.
+/compliance/ @Vanshmodi-dev
+
+# --- The single point of secret handling and log redaction ---
+/src/infra/logger/redact.mjs @Vanshmodi-dev
+
+# --- Automation that holds a write token ---
+/.github/ @Vanshmodi-dev

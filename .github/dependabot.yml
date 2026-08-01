@@ -1,0 +1,47 @@
+version: 2
+
+# TP Reviews Engine - dependency updates (IMPL PLAN 11.1 step 11).
+#
+# THREAT-05, supply-chain compromise, is the highest residual technical risk in
+# the system. Dependabot bounds it; it does not eliminate it. The controls that
+# matter alongside it are DEP-4 (CI installs from the committed lockfile only)
+# and DEP-5 (the Playwright and Chromium pin is never auto-merged).
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    labels: ['dependencies']
+    groups:
+      # One pull request for the dev toolchain rather than six. These do not
+      # ship, and reviewing them separately spends attention that belongs on
+      # the production dependencies.
+      dev-toolchain:
+        dependency-type: development
+        patterns: ['*']
+        exclude-patterns: ['playwright', '@playwright/*']
+    ignore:
+      # DEP-5. Chromium is pinned via the Playwright version in the lockfile,
+      # and the pin is what makes a harvest reproducible. A version bump is a
+      # deliberate, separately-verified change - never an automatic one.
+      - dependency-name: playwright
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ci
+    labels: ['dependencies']
+    # TR-CI-002 requires every third-party action to be pinned to a full commit
+    # SHA rather than a tag. Dependabot updates the SHA and records the version
+    # in the pull request, which is the only way SHA pinning stays maintainable.

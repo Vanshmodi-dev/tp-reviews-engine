@@ -18,7 +18,7 @@ One file per client, recording written authorisation from the business that
 owns the listing: who authorised it, when, their relationship to the business,
 where the evidence lives, and an acknowledgement of scope.
 
-This is not paperwork. A studio harvesting *its own client's* reviews, at that
+This is not paperwork. A studio harvesting _its own client's_ reviews, at that
 client's written instruction, from that client's own listing, for display on
 that client's own site, is in a materially stronger position than an anonymous
 party bulk-collecting third-party data — on legitimate-interest grounds, on any

@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# pre-push - budget < 45 s (HOOK-01).
+#
+# Catches the failures that would otherwise block a reviewer: a type error, a
+# broken unit test, a violated property law, an architecture rule.
+#
+# Deliberately NOT here: integration, chaos, security, budgets, and coverage.
+# Those are CI-only because they are too slow for a push gate, and a push gate
+# that takes four minutes is a push gate that gets bypassed.
+#
+# HOOK-04: CI re-runs all of this and more. Nothing here is authoritative.
+
+set -eu
+
+BIN=./node_modules/.bin
+
+if [ ! -x "$BIN/vitest" ]; then
+  echo "pre-push: node_modules is missing or stale. Run: npm ci"
+  exit 1
+fi
+
+echo "pre-push: typecheck..."
+"$BIN/tsc" -p jsconfig.json
+
+echo "pre-push: unit, property, and architecture suites..."
+"$BIN/vitest" run tests/unit tests/property tests/architecture --passWithNoTests
+
+echo "pre-push: ok"

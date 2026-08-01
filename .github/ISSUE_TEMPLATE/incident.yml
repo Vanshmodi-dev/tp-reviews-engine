@@ -1,0 +1,80 @@
+name: Incident
+description: Something in production is wrong, stale, or failing.
+title: '[incident] '
+labels: ['incident']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A payload that is stale is not visibly broken to a visitor — the site shows
+        correct, slightly older reviews. Below 72 hours that is tolerable and no client
+        communication is warranted. Beyond 72 hours the client is told, plainly, before
+        they notice. They must never discover a problem before we report it.
+
+  - type: input
+    id: symptom
+    attributes:
+      label: Symptom
+      description: What is observably wrong, in one sentence.
+      placeholder: Payload for commerce-insight/main has not changed in four days.
+    validations:
+      required: true
+
+  - type: input
+    id: since
+    attributes:
+      label: First observed
+      description: Date and time, with timezone.
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected clients and listings
+      description: One `slug/listing-key` per line. Write `unknown` rather than guessing.
+    validations:
+      required: true
+
+  - type: input
+    id: error-class
+    attributes:
+      label: Error class
+      description: The `ERR-*` class from the run log, if there is one.
+      placeholder: ERR-BLOCKED-CHALLENGE
+  - type: input
+    id: run
+    attributes:
+      label: Run link
+      description: Link to the failing workflow run.
+
+  - type: dropdown
+    id: visitor-impact
+    attributes:
+      label: Is a visitor seeing anything wrong?
+      description: >-
+        Publication is gated on invariants, so the expected answer is "no, data is
+        stale but correct". If it is anything else, that is a gate failure and this
+        issue is more serious than a stale payload.
+      options:
+        - 'No — data is stale but correct'
+        - 'Yes — data is visibly wrong'
+        - 'Yes — nothing is rendering'
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: suspected
+    attributes:
+      label: Suspected cause
+      description: Say what you actually know and mark the rest as speculation.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked the runbook for this error class in `docs/runbooks/`
+        - label: This report contains no secret, token, or cookie value
+          required: true

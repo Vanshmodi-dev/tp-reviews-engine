@@ -1,0 +1,155 @@
+name: CI
+
+# TR-CI-003: pull_request_target MUST NOT appear in any workflow. It runs with
+# the base repository's token against a fork's code, which is how a public
+# repository hands a write token to an untrusted pull request.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# TR-CI-001: an explicit top-level permissions block with the minimum required
+# set. A workflow without one inherits whatever the repository default happens
+# to be, which is a setting nobody re-reads after the day it was configured.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # All fourteen gate groups run in one job so that setup happens once and the
+  # whole set finishes inside the five-minute budget. Every step is blocking:
+  # there is no continue-on-error anywhere in this file, deliberately.
+  gates:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # --- 1. setup -------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the secret-scan gate walks history
+
+      - name: Setup engine
+        uses: ./.github/actions/setup-engine
+
+      # --- 2. lint --------------------------------------------------------
+      # LINT-01: warnings are errors. A warning nobody must fix is a rule
+      # nobody follows.
+      - name: Lint
+        run: npm run lint
+
+      # --- 3. format ------------------------------------------------------
+      - name: Format
+        run: npm run format:check
+
+      # --- 4. typecheck ---------------------------------------------------
+      # TS-04: zero errors on main at all times. No "known errors" baseline.
+      - name: Typecheck
+        run: npm run typecheck
+
+      # --- 5. test --------------------------------------------------------
+      # TEST-CFG-03: the suite is timed on every run and the timing is printed.
+      # IR-17 - the suite creeping past three minutes - is detected by a trend,
+      # not by an event, so the number has to be in every log to be a trend.
+      - name: Test
+        run: |
+          start=$(date +%s)
+          npm test
+          echo "default-suite-seconds=$(( $(date +%s) - start ))" >> "$GITHUB_STEP_SUMMARY"
+
+      # --- 6. architecture ------------------------------------------------
+      # LINT-04's second mechanism. Lint gives the fast local signal; this
+      # gives the authoritative one and can express graph-level properties lint
+      # cannot - acyclicity, purity of a whole subtree, reachability.
+      - name: Architecture rules
+        run: npx vitest run tests/architecture --passWithNoTests
+
+      # --- 7. integration -------------------------------------------------
+      - name: Integration
+        run: npx vitest run tests/integration --passWithNoTests
+
+      # --- 8. security ----------------------------------------------------
+      - name: Security suites
+        run: npx vitest run tests/security --passWithNoTests
+
+      # --- 9. size --------------------------------------------------------
+      # The renderer ships to client websites and has a hard budget.
+      - name: Size budgets
+        run: |
+          npm run size
+          npx vitest run tests/budgets --passWithNoTests
+
+      # --- 10. schemas ----------------------------------------------------
+      # EDR-039: a published JSON Schema is the runtime authority and beats all
+      # prose. It has to be valid before it can be authoritative.
+      - name: Schemas
+        run: npm run validate:schemas
+
+      # --- 11. workflow lint ----------------------------------------------
+      # TR-CI-001, TR-CI-002, TR-CI-003 asserted mechanically. The full test
+      # arrives as tests/security/workflow-lint.test.mjs; this inline check
+      # holds the gate meanwhile, because a gate that is added later is a gate
+      # that was absent for exactly the period when the workflows were being
+      # written.
+      - name: Workflow hygiene
+        run: |
+          set -euo pipefail
+          fail=0
+
+          # Anchored on the YAML key, not the bare word: the word appears in
+          # this file's own comments, and a check that flags its own rationale
+          # gets deleted rather than fixed.
+          if grep -rnE "^[[:space:]]*pull_request_target:" .github/workflows/; then
+            echo "::error::TR-CI-003: pull_request_target must not be a workflow trigger."
+            fail=1
+          fi
+
+          for wf in .github/workflows/*.yml; do
+            if ! grep -q "^permissions:" "$wf"; then
+              echo "::error file=$wf::TR-CI-001: no top-level permissions block."
+              fail=1
+            fi
+          done
+
+          # TR-CI-002: third-party actions pinned to a full 40-character commit
+          # SHA, never a tag. A tag is mutable; a compromised upstream can move
+          # it under us without a single byte changing in this repository.
+          if grep -rnE "uses:[[:space:]]+[^./].*@(v[0-9]|main|master)" \
+               .github/workflows/ .github/actions/; then
+            echo "::error::TR-CI-002: pin third-party actions to a full commit SHA."
+            fail=1
+          fi
+
+          exit $fail
+
+      # --- 12. secret scan ------------------------------------------------
+      # CON-17: no secret exists in any file, in any branch, ever. Platform
+      # push protection and secret scanning are the primary control; this is
+      # the in-repository backstop for the shapes those miss.
+      - name: Secret scan
+        run: |
+          set -euo pipefail
+          patterns='(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{80,}|AIza[0-9A-Za-z_-]{35}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[baprs]-[0-9A-Za-z-]{10,})'
+          if git grep -nIE "$patterns" -- . ':!docs/' ':!package-lock.json'; then
+            echo "::error::A value matching a known secret shape is tracked in this repository."
+            exit 1
+          fi
+          echo "No secret-shaped value found in tracked files."
+
+      # --- 13. audit ------------------------------------------------------
+      # THREAT-05 is the highest residual technical risk in the system. This
+      # bounds it; it does not eliminate it.
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      # --- 14. coverage ---------------------------------------------------
+      # TEST-CFG-01: per-path thresholds, never one global number. A global
+      # number lets core/gate/ and redact.mjs decay while the average is
+      # carried by trivially-covered constants files.
+      - name: Coverage
+        run: npm run test:coverage

@@ -1,0 +1,95 @@
+name: Client onboarding
+description: Add a new client and their listings to the engine.
+title: '[onboarding] '
+labels: ['onboarding']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Offer the Business Profile API first, every time.**
+
+        For any client willing to grant OAuth access to their own Google Business Profile,
+        that adapter is strictly superior on every axis — free, sanctioned by the source,
+        complete, and stable. The DOM adapter exists for clients who will not complete that
+        grant, and it carries a terms-of-service risk the client should understand before
+        choosing it, not after.
+
+  - type: input
+    id: slug
+    attributes:
+      label: Client slug
+      description: >-
+        Lowercase, hyphenated. This becomes part of the public payload URL and the Ledger
+        primary key, and it is immutable after first publication — changing it later is a
+        migration, not an edit.
+      placeholder: commerce-insight
+    validations:
+      required: true
+
+  - type: input
+    id: display-name
+    attributes:
+      label: Display name
+    validations:
+      required: true
+
+  - type: dropdown
+    id: adapter
+    attributes:
+      label: Adapter
+      options:
+        - 'google:business-profile-api  (recommended — sanctioned, complete, stable)'
+        - 'google:places-api  (sanctioned, but returns roughly five reviews)'
+        - 'google:dom  (contrary to source terms of service — see SAD §15)'
+        - 'file:csv  (migration or import)'
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: bpa-offered
+    attributes:
+      label: Business Profile API
+      options:
+        - label: The Business Profile API was offered to this client and the outcome is recorded in the config `notes` field
+          required: true
+
+  - type: textarea
+    id: authorization
+    attributes:
+      label: Written authorisation
+      description: >-
+        Required for every `google:dom` listing. Who authorised it, on what date, their
+        relationship to the business, and where the evidence lives under
+        `compliance/authorizations/`. A config using the DOM adapter without a matching
+        authorisation record fails validation.
+      placeholder: |
+        authorized_by:      Founder, Commerce Insight
+        authorization_date: 2026-07-22
+        relationship:       owner
+        evidence_ref:       compliance/authorizations/commerce-insight.md
+
+  - type: checkboxes
+    id: ownership
+    attributes:
+      label: Ownership
+      options:
+        - label: This listing belongs to the client themselves — not a competitor, not a third party
+          required: true
+        - label: The client has been told what will be displayed, how often it refreshes, and how a reviewer requests removal
+          required: true
+
+  - type: textarea
+    id: listings
+    attributes:
+      label: Listings
+      description: One per line, as `key` plus the identity used to resolve it.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Tier
+      options: [premium, standard, economy, paused]
+    validations:
+      required: true

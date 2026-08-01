@@ -14,9 +14,9 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "verify": "node -e \"console.error('verify: not yet implemented. Lands in IMPL PLAN section 21 (T-043); runs lint + format:check + typecheck + test.')\"",
-    "lint": "node -e \"console.error('lint: not yet implemented. Lands in IMPL PLAN section 19 (T-026).')\"",
-    "lint:fix": "node -e \"console.error('lint:fix: not yet implemented. Lands in IMPL PLAN section 19 (T-026).')\"",
+    "verify": "npm run lint && npm run format:check && npm run typecheck && npm test",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --max-warnings 0 --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -p jsconfig.json",

@@ -1,0 +1,28 @@
+# TP Reviews Engine - editor defaults
+#
+# IMPL PLAN 16.3: LF, UTF-8, final newline, 2-space indent.
+#
+# This reinforces TR-BLD-002 one layer earlier than .gitattributes: the editor
+# never writes a CRLF in the first place, so Git never has to normalise one.
+# Prettier (FMT-02, endOfLine: "lf") is the third layer.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown uses two trailing spaces as a hard line break.
+[*.md]
+trim_trailing_whitespace = false
+
+# Fixtures are captured data, not source. Reformatting them changes
+# whitespace-sensitive extraction behaviour and invalidates golden output
+# (FMT-01, TR-TEST-011).
+[fixtures/**]
+insert_final_newline = false
+trim_trailing_whitespace = false

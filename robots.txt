@@ -1,0 +1,8 @@
+# This origin serves machine-readable JSON, not pages for people.
+#
+# Indexing raw payloads would put a client's review data into search results as
+# a bare JSON document, competing with the client's own page - which is the
+# page the data exists to improve.
+
+User-agent: *
+Disallow: /

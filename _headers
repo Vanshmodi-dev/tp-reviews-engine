@@ -1,0 +1,15 @@
+# Response headers for the static origin.
+#
+# The measured, literal headers actually returned by the host are recorded in
+# docs/runbooks/pages-headers.md on main (TR-CI-160, OIQ-04). This file states
+# intent; that runbook states fact, and where they disagree the runbook is
+# right. Not every static host honours this file.
+
+/*
+  Access-Control-Allow-Origin: *
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+
+/*.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: public, max-age=300, stale-while-revalidate=86400

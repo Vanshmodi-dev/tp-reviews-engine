@@ -1,0 +1,11 @@
+# Byte-determinism on the branch where bytes are the product.
+#
+# TR-BLD-002's stated reason is payload-specific: "a CRLF line ending in a JSON
+# payload changes its bytes and therefore its content hash, silently breaking
+# hash-gating on Windows checkouts". Those payloads live here, so the rule
+# belongs here too. Without it, a checkout of this branch on a machine with
+# core.autocrlf=true rewrites every published file on every run.
+
+* text=auto eol=lf
+
+*.json text eol=lf

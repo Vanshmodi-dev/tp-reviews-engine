@@ -225,3 +225,30 @@ describe('identity digest shape', () => {
     expect(identityDigest(parts)).toBe(identityDigest(parts));
   });
 });
+
+describe('branches that had no test until coverage said so', () => {
+  it('canonicalises boolean false, not only true', () => {
+    expect(value(canonicalize(false))).toBe('false');
+    expect(value(canonicalize(true))).toBe('true');
+    expect(value(canonicalize({ a: false, b: true }))).toBe('{"a":false,"b":true}');
+  });
+
+  it('rejects an unhashable value nested inside an array', () => {
+    // The array walker has its own bail-out path. Without this, a NaN inside a
+    // list of ratings would have been caught only at the top level.
+    expect(canonicalize([1, Number.NaN, 3]).ok).toBe(false);
+    expect(canonicalize([{ n: Number.POSITIVE_INFINITY }]).ok).toBe(false);
+  });
+
+  it('rejects an unhashable value nested deep inside an object', () => {
+    expect(canonicalize({ a: { b: { c: Number.NaN } } }).ok).toBe(false);
+  });
+
+  it('rejects a cycle reached through an array', () => {
+    /** @type {unknown[]} */
+    const cyclic = [1];
+    cyclic.push(cyclic);
+
+    expect(canonicalize(cyclic).ok).toBe(false);
+  });
+});

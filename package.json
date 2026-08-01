@@ -1,0 +1,32 @@
+{
+  "name": "tp-reviews-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Keeps client websites synchronised with their published customer reviews, without paid widgets and without the website ever contacting a review source.",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "TradyPerch",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vanshmodi-dev/tp-reviews-engine.git"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "verify": "node -e \"console.error('verify: not yet implemented. Lands in IMPL PLAN section 21 (T-043); runs lint + format:check + typecheck + test.')\"",
+    "lint": "node -e \"console.error('lint: not yet implemented. Lands in IMPL PLAN section 19 (T-026).')\"",
+    "lint:fix": "node -e \"console.error('lint:fix: not yet implemented. Lands in IMPL PLAN section 19 (T-026).')\"",
+    "format": "node -e \"console.error('format: not yet implemented. Lands in IMPL PLAN section 20 (T-034).')\"",
+    "format:check": "node -e \"console.error('format:check: not yet implemented. Lands in IMPL PLAN section 20 (T-034).')\"",
+    "typecheck": "node -e \"console.error('typecheck: not yet implemented. Lands in IMPL PLAN section 18 (T-023).')\"",
+    "test": "node -e \"console.error('test: not yet implemented. Lands in IMPL PLAN section 21 (T-037).')\"",
+    "test:coverage": "node -e \"console.error('test:coverage: not yet implemented. Lands in IMPL PLAN section 21 (T-039).')\"",
+    "test:live": "node -e \"console.error('test:live: not yet implemented. Lands in PH-19.')\"",
+    "test:watch": "node -e \"console.error('test:watch: not yet implemented. Lands in IMPL PLAN section 21 (T-037).')\"",
+    "size": "node -e \"console.error('size: not yet implemented. Lands in PH-23; runs scripts/size-report.mjs.')\"",
+    "validate:schemas": "node -e \"console.error('validate:schemas: not yet implemented. Lands in PH-09; runs scripts/validate-all.mjs.')\"",
+    "fixtures:serve": "node -e \"console.error('fixtures:serve: not yet implemented. Lands in PH-15; runs fixtures/server/serve.mjs.')\"",
+    "parse:fixture": "node -e \"console.error('parse:fixture: not yet implemented. Lands in PH-13.')\""
+  }
+}

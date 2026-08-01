@@ -6,19 +6,19 @@ This repository is governed by four baselined documents, indexed in
 [`docs/README.md`](docs/README.md). They are not background reading; they are
 the specification.
 
-| If you are about to… | Read first |
-|---|---|
-| Implement anything at all | TRD §0.5 (how to use the TRD), §1, §6–§7 |
-| Touch `src/core/` | TRD §67.4, plus the section for that module |
-| Touch acquisition | TRD §15–§21, then §92.2 (the five risks) |
-| Write tests | TRD §61 |
-| Change a workflow | TRD §62, §47 |
+| If you are about to…               | Read first                                                        |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| Implement anything at all          | TRD §0.5 (how to use the TRD), §1, §6–§7                          |
+| Touch `src/core/`                  | TRD §67.4, plus the section for that module                       |
+| Touch acquisition                  | TRD §15–§21, then §92.2 (the five risks)                          |
+| Write tests                        | TRD §61                                                           |
+| Change a workflow                  | TRD §62, §47                                                      |
 | Change the published payload shape | **Stop.** That is the public contract (TRD §52); it needs an ADR. |
 
 **Nothing in those documents may be redesigned, simplified, or deferred in a
 pull request.** If the specification is wrong or incomplete, that is a defect
 against the TRD (raise an EDR) or the SAD (raise an ADR) — not something to
-solve locally. A change to *what* is built is never a plan change.
+solve locally. A change to _what_ is built is never a plan change.
 
 ## Setup
 
@@ -39,16 +39,16 @@ to mention one.
 
 **TRD §67 — Code standards**
 
-| Rule | Limit |
-|---|---|
-| Cyclomatic complexity | ≤ 10 |
-| Function length | ≤ 60 lines |
-| File length | ≤ 400 lines |
-| Parameters | ≤ 4 |
-| Nesting depth | ≤ 3 |
-| Default exports | None |
-| Module system | ESM only, `.mjs`, `node:`-prefixed built-ins |
-| Encoding | UTF-8 without BOM, LF, final newline |
+| Rule                  | Limit                                        |
+| --------------------- | -------------------------------------------- |
+| Cyclomatic complexity | ≤ 10                                         |
+| Function length       | ≤ 60 lines                                   |
+| File length           | ≤ 400 lines                                  |
+| Parameters            | ≤ 4                                          |
+| Nesting depth         | ≤ 3                                          |
+| Default exports       | None                                         |
+| Module system         | ESM only, `.mjs`, `node:`-prefixed built-ins |
+| Encoding              | UTF-8 without BOM, LF, final newline         |
 
 **TRD §68 — Prohibited patterns**
 

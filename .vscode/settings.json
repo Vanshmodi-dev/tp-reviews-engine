@@ -1,0 +1,36 @@
+{
+  // Format on save with Prettier, ESLint as the fixer (IMPL PLAN 16.3).
+  // The point is that formatting never reaches review at all.
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // Editor type errors match CI type errors. Without this the editor uses its
+  // own bundled TypeScript, which can differ from the pinned one.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "javascript.validate.enable": true,
+
+  // .mjs is the only source extension (TRD 67.1).
+  "files.associations": {
+    "*.mjs": "javascript"
+  },
+
+  // Reinforces .editorconfig and .gitattributes for anyone whose editor
+  // ignores both.
+  "files.eol": "\n",
+  "files.encoding": "utf8",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+
+  // These are machine-written branch checkouts and run output. Searching them
+  // returns thousands of irrelevant hits during an incident.
+  "search.exclude": {
+    "**/node_modules": true,
+    ".state": true,
+    ".publish": true,
+    ".artifacts": true,
+    "coverage": true
+  }
+}

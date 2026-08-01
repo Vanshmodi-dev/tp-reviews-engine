@@ -54,8 +54,8 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
   },
   "include": ["src/**/*.mjs", "tests/**/*.mjs", "scripts/**/*.mjs", "frontend/**/*.mjs"],
-  "exclude": ["node_modules", ".state", ".publish", ".artifacts", "fixtures"]
+  "exclude": ["node_modules", ".state", ".publish", ".artifacts", "fixtures"],
 }

@@ -1,48 +1,38 @@
 import { markNormalised } from '../model/review.mjs';
+import { decodeAndStrip, hasSurvivingMarkup } from './markup.mjs';
+import { boundGraphemes, countGraphemes, stripControls, toNFC } from './unicode.mjs';
+import { canonicaliseWhitespace, stripTruncationMarker } from './whitespace.mjs';
 
 /**
  * The normalisation pipeline — **the security boundary for every client website
  * simultaneously**.
  *
- * ============================================================================
- * NOT IMPLEMENTED YET. THIS IS THE DELIBERATE RED-PHASE PLACEHOLDER.
- * ============================================================================
+ * Eight steps, and EDR-019 makes the **order** normative rather than
+ * incidental. Each position below is load-bearing:
  *
- * PH-02's Sequencing Note (ID-13) requires the property laws PT-10 and PT-11 to
- * be written as failing tests and merged *before* any implementation task
- * starts. This module exists so those laws have the real import path to point
- * at from the first commit, rather than being retargeted later — a law written
- * against a stand-in and then pointed somewhere else is a law nobody has
- * actually run against the thing it governs.
+ *   1-2. Decode entities, then remove markup. Decoding must come first, or
+ *        `&lt;script&gt;` survives stripping as literal text and re-encodes
+ *        into a live tag downstream. Markup is REMOVED, never escaped
+ *        (TR-NORM-010) — escaping means a consumer that unescapes gets it back.
+ *   3.   NFC, before bounding, so grapheme counting is meaningful.
+ *   4.   Strip controls, zero-width, and bidi OVERRIDES — keeping bidi marks,
+ *        which mixed-direction text needs (TR-NORM-012).
+ *   5.   Canonicalise whitespace, after control removal, so invisible
+ *        characters cannot survive as "content" propping a run apart.
+ *   6.   Detect and remove a truncation marker, after whitespace is regular so
+ *        matching is reliable.
+ *   7.   Bound length LAST, by grapheme cluster, so the bound applies to final
+ *        content rather than to padding that was about to be removed
+ *        (EDR-020).
+ *   8.   Brand, making the boundary enforceable by the type checker.
  *
- * It returns its input unchanged. That is not a simplification to be tidied up;
- * it is the state the laws are currently proving is wrong.
- *
- * **Nothing may import this until T-068 replaces it.** No caller exists today,
- * and the architecture test plus the eventual markup self-check (T-069) are
- * what keep it that way.
- *
- * The eight steps, in the order EDR-019 makes normative (TRD §23.3):
- *
- *   1. Decode entities        — repeatedly, until stable
- *   2. Strip markup           — REMOVE, never escape (TR-NORM-010)
- *   3. Unicode normalise      — NFC
- *   4. Remove control chars   — C0/C1 except \n and \t; zero-width; bidi OVERRIDES
- *   5. Canonicalise whitespace
- *   6. Detect truncation      — set text_truncated, remove the marker
- *   7. Bound length           — 5,000 GRAPHEME clusters, last (EDR-020)
- *   8. Type and brand         — return CleanString
- *
- * Step 4 strips bidi *overrides* and preserves bidi *marks*. They are different
- * characters with different purposes: overrides visually reorder text and are a
- * real spoofing vector; marks are required to render mixed-direction text
- * correctly, and stripping them corrupts legitimate Arabic and Hebrew reviews
- * (TR-NORM-012).
+ * Reordering any two of these is a real defect, which is why the order is
+ * asserted by observing intermediate effects rather than only the final output.
  *
  * @module core/normalize
  */
 
-/** TRD §23.4 / EDR-020. Grapheme clusters, not code units, not bytes. */
+/** TRD §23.4 / EDR-020. Grapheme clusters — not code units, not bytes. */
 export const MAX_TEXT_LENGTH = 5000;
 
 /**
@@ -50,16 +40,48 @@ export const MAX_TEXT_LENGTH = 5000;
  * @property {import('../model/review.mjs').CleanString} text
  * @property {boolean} text_truncated  The source's own text was longer than what was retrieved.
  * @property {boolean} text_clipped    The engine bounded the length (TR-NORM-021).
+ * @property {boolean} markup_survived Self-check failure. `ERR-CLEAN-MARKUP-SURVIVED`, critical.
  */
 
 /**
- * Normalises one string.
+ * Runs the eight-step pipeline.
  *
- * @param {string} input
+ * @param {string} input Raw text from any adapter. Assumed hostile.
+ * @param {number} [maxLength] Grapheme bound. Defaults to {@link MAX_TEXT_LENGTH}.
  * @returns {NormalizeResult}
  */
-export function normalize(input) {
-  // The no-op. Replaced step by step across T-064 through T-068; PT-10 and
-  // PT-11 are red until it is.
-  return { text: markNormalised(input), text_truncated: false, text_clipped: false };
+export function normalize(input, maxLength = MAX_TEXT_LENGTH) {
+  // 1-2. Entities out, markup out.
+  const stripped = decodeAndStrip(input);
+
+  // 3. Compose, so a grapheme is a grapheme.
+  const composed = toNFC(stripped);
+
+  // 4. Invisible and direction-bending characters out.
+  const visible = stripControls(composed);
+
+  // 5. Whitespace made regular.
+  const spaced = canonicaliseWhitespace(visible);
+
+  // 6. The source's own "... More" removed, and recorded.
+  const { text: unmarked, truncated } = stripTruncationMarker(spaced);
+
+  // 7. Bounded last, on a cluster boundary.
+  const { text: bounded, clipped } = boundGraphemes(unmarked, maxLength);
+
+  // The self-check (T-069). This asserts the boundary held rather than assuming
+  // it: if markup reaches here, the caller must raise
+  // ERR-CLEAN-MARKUP-SURVIVED, which is `critical` because it means the
+  // security boundary itself failed rather than that the data was merely odd.
+  const markupSurvived = hasSurvivingMarkup(bounded);
+
+  // 8. Brand.
+  return {
+    text: markNormalised(bounded),
+    text_truncated: truncated,
+    text_clipped: clipped,
+    markup_survived: markupSurvived,
+  };
 }
+
+export { countGraphemes };

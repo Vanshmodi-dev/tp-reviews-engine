@@ -1,0 +1,174 @@
+{
+  "table_version": 1,
+  "_doc": [
+    "Relative-date phrase table. DATA, NOT CODE (TR-EXT-052): adding a locale is",
+    "an edit to this file and nothing else. T-073's acceptance is exactly that.",
+    "",
+    "Matching is deliberately order-agnostic. The resolver looks for a quantity",
+    "and a unit anywhere in the phrase, which handles suffix ordering ('2 weeks",
+    "ago'), prefix ordering ('vor 2 Wochen'), and multi-word prefixes ('il y a 2",
+    "semaines') with one mechanism instead of three.",
+    "",
+    "'articles' are the words a locale uses to mean exactly one. TRD 21.6.1's",
+    "Agent Note names their absence as the parser bug that passes a naive test",
+    "suite and then fails on every 'a day ago' and 'yesterday' in the corpus -",
+    "which are the most common phrasings on recent reviews, and therefore the",
+    "ones a 'newest first' display shows most prominently.",
+    "",
+    "'special' phrases carry their own quantity and unit because they name a",
+    "duration without stating a number."
+  ],
+  "locales": {
+    "en": {
+      "name": "English",
+      "articles": ["a", "an", "one"],
+      "units": {
+        "second": ["second", "seconds"],
+        "minute": ["minute", "minutes"],
+        "hour": ["hour", "hours"],
+        "day": ["day", "days"],
+        "week": ["week", "weeks"],
+        "month": ["month", "months"],
+        "year": ["year", "years"]
+      },
+      "special": {
+        "yesterday": { "count": 1, "unit": "day" },
+        "today": { "count": 0, "unit": "day" },
+        "just now": { "count": 0, "unit": "minute" },
+        "a moment ago": { "count": 0, "unit": "minute" },
+        "last week": { "count": 1, "unit": "week" },
+        "last month": { "count": 1, "unit": "month" },
+        "last year": { "count": 1, "unit": "year" }
+      }
+    },
+    "de": {
+      "name": "German",
+      "articles": ["ein", "eine", "einem", "einer", "einen"],
+      "units": {
+        "second": ["sekunde", "sekunden"],
+        "minute": ["minute", "minuten"],
+        "hour": ["stunde", "stunden"],
+        "day": ["tag", "tagen", "tage"],
+        "week": ["woche", "wochen"],
+        "month": ["monat", "monaten", "monate"],
+        "year": ["jahr", "jahren", "jahre"]
+      },
+      "special": {
+        "gestern": { "count": 1, "unit": "day" },
+        "heute": { "count": 0, "unit": "day" },
+        "vorgestern": { "count": 2, "unit": "day" },
+        "letzte woche": { "count": 1, "unit": "week" },
+        "letzten monat": { "count": 1, "unit": "month" },
+        "letztes jahr": { "count": 1, "unit": "year" }
+      }
+    },
+    "fr": {
+      "name": "French",
+      "articles": ["un", "une"],
+      "units": {
+        "second": ["seconde", "secondes"],
+        "minute": ["minute", "minutes"],
+        "hour": ["heure", "heures"],
+        "day": ["jour", "jours"],
+        "week": ["semaine", "semaines"],
+        "month": ["mois"],
+        "year": ["an", "ans", "année", "années"]
+      },
+      "special": {
+        "hier": { "count": 1, "unit": "day" },
+        "aujourd'hui": { "count": 0, "unit": "day" },
+        "avant-hier": { "count": 2, "unit": "day" },
+        "la semaine dernière": { "count": 1, "unit": "week" },
+        "le mois dernier": { "count": 1, "unit": "month" },
+        "l'année dernière": { "count": 1, "unit": "year" }
+      }
+    },
+    "es": {
+      "name": "Spanish",
+      "articles": ["un", "una"],
+      "units": {
+        "second": ["segundo", "segundos"],
+        "minute": ["minuto", "minutos"],
+        "hour": ["hora", "horas"],
+        "day": ["día", "días", "dia", "dias"],
+        "week": ["semana", "semanas"],
+        "month": ["mes", "meses"],
+        "year": ["año", "años", "ano", "anos"]
+      },
+      "special": {
+        "ayer": { "count": 1, "unit": "day" },
+        "hoy": { "count": 0, "unit": "day" },
+        "anteayer": { "count": 2, "unit": "day" },
+        "la semana pasada": { "count": 1, "unit": "week" },
+        "el mes pasado": { "count": 1, "unit": "month" },
+        "el año pasado": { "count": 1, "unit": "year" }
+      }
+    },
+    "pt": {
+      "name": "Portuguese",
+      "articles": ["um", "uma"],
+      "units": {
+        "second": ["segundo", "segundos"],
+        "minute": ["minuto", "minutos"],
+        "hour": ["hora", "horas"],
+        "day": ["dia", "dias"],
+        "week": ["semana", "semanas"],
+        "month": ["mês", "meses", "mes"],
+        "year": ["ano", "anos"]
+      },
+      "special": {
+        "ontem": { "count": 1, "unit": "day" },
+        "hoje": { "count": 0, "unit": "day" },
+        "anteontem": { "count": 2, "unit": "day" },
+        "semana passada": { "count": 1, "unit": "week" },
+        "mês passado": { "count": 1, "unit": "month" },
+        "ano passado": { "count": 1, "unit": "year" }
+      }
+    },
+    "hi": {
+      "name": "Hindi",
+      "articles": ["एक"],
+      "units": {
+        "second": ["सेकंड", "सेकेंड"],
+        "minute": ["मिनट"],
+        "hour": ["घंटा", "घंटे"],
+        "day": ["दिन"],
+        "week": ["सप्ताह", "हफ्ते", "हफ़्ते", "हफ्ता"],
+        "month": ["महीना", "महीने", "माह"],
+        "year": ["साल", "वर्ष", "बरस"]
+      },
+      "special": {
+        "कल": { "count": 1, "unit": "day" },
+        "आज": { "count": 0, "unit": "day" },
+        "परसों": { "count": 2, "unit": "day" },
+        "पिछले सप्ताह": { "count": 1, "unit": "week" },
+        "पिछले महीने": { "count": 1, "unit": "month" },
+        "पिछले साल": { "count": 1, "unit": "year" }
+      }
+    },
+    "ar": {
+      "name": "Arabic",
+      "articles": ["واحد", "واحدة"],
+      "units": {
+        "second": ["ثانية", "ثواني", "ثوان"],
+        "minute": ["دقيقة", "دقائق"],
+        "hour": ["ساعة", "ساعات"],
+        "day": ["يوم", "أيام", "يومين", "ايام"],
+        "week": ["أسبوع", "أسابيع", "اسبوع", "أسبوعين"],
+        "month": ["شهر", "أشهر", "شهور", "شهرين"],
+        "year": ["سنة", "سنوات", "عام", "أعوام", "سنتين"]
+      },
+      "special": {
+        "أمس": { "count": 1, "unit": "day" },
+        "اليوم": { "count": 0, "unit": "day" },
+        "الآن": { "count": 0, "unit": "minute" }
+      },
+      "duals": {
+        "يومين": { "count": 2, "unit": "day" },
+        "أسبوعين": { "count": 2, "unit": "week" },
+        "شهرين": { "count": 2, "unit": "month" },
+        "سنتين": { "count": 2, "unit": "year" }
+      }
+    }
+  }
+}

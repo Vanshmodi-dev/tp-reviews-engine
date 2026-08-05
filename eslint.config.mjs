@@ -142,7 +142,10 @@ export default [
   {
     files: ['**/*.mjs'],
     languageOptions: {
-      ecmaVersion: 2023,
+      // 'latest' rather than a pinned year: import attributes - `with { type:
+      // 'json' }` - are ES2025, and a pinned parser silently cannot read the
+      // file at all rather than reporting a rule violation.
+      ecmaVersion: 'latest',
       sourceType: 'module',
       globals: { ...globals.node },
     },
@@ -176,6 +179,11 @@ export default [
       ],
       'tpre/no-commented-out-code': 'error',
       'tpre/no-bare-todo': 'error',
+      // A leading underscore marks a parameter that is deliberately unused.
+      // keepPinnedDate(existing, _newlyObservedPhrase) ignores its second
+      // argument on purpose - that is what makes the call site read as "we saw
+      // a new phrase and are keeping the old date".
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'no-var': 'error',
       'prefer-const': 'error',
       eqeqeq: ['error', 'always'],

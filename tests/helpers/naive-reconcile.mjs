@@ -63,7 +63,7 @@ export function referenceReconcile({ prior, observed, completeness, removalConfi
 function applyObserved(next, observed, now) {
   const seen = new Set();
 
-  for (const review of observed) {
+  for (const review of collapseDuplicates(observed)) {
     const id = review.identity_hash;
     seen.add(id);
     const existing = next.get(id);
@@ -85,7 +85,69 @@ function applyObserved(next, observed, now) {
 }
 
 /**
+ * Collapses intra-run duplicates by a TOTAL ordering (DUP-03).
+ *
+ * One crawl can legitimately yield the same `identity_hash` twice with
+ * different content — a paginated list re-renders while it is being read. The
+ * survivor MUST be chosen by comparing the records themselves, never by which
+ * one the iteration happened to reach last, because upstream ordering is
+ * unstable and personalised. "Last write wins" is the natural implementation
+ * and it is the one that breaks PT-02.
+ *
+ * The ordering here is lexicographic on `content_hash`. Any total order works;
+ * what matters is that it reads only the records' own values. Two entries that
+ * compare equal are identical in every field this reconciler copies, so which
+ * of them survives is unobservable.
+ *
+ * @param {ReadonlyArray<any>} observed
+ * @returns {any[]}
+ */
+function collapseDuplicates(observed) {
+  const winners = new Map();
+
+  for (const review of observed) {
+    const held = winners.get(review.identity_hash);
+
+    if (held === undefined || String(review.content_hash) < String(held.content_hash)) {
+      winners.set(review.identity_hash, review);
+    }
+  }
+
+  return [...winners.values()].sort((a, b) =>
+    a.identity_hash < b.identity_hash ? -1 : a.identity_hash > b.identity_hash ? 1 : 0,
+  );
+}
+
+/**
  * The absent half, and the only place the asymmetry lives.
+ *
+ * ## Why this half needs an idempotence guard and the observed half does not
+ *
+ * PT-01 states `reconcile(reconcile(L,H),H) ≡ reconcile(L,H)` for fixed `now`.
+ * Every field the observed half writes satisfies that for free, because each is
+ * either derived from the incoming review or explicitly preserved from the
+ * existing record — re-applying computes the same value again.
+ *
+ * `missing_streak` is the one exception. It is the only field defined by
+ * *accumulation* rather than by the observation, so a second application of the
+ * same harvest counts the same absence twice: a record absent from one `full`
+ * harvest reaches streak 1, then 2, and with `removal_confirmations` at 3 a
+ * doubly-applied harvest is two thirds of the way to a tombstone that one
+ * application would never have reached.
+ *
+ * That is not a hypothetical. Idempotence exists precisely so a shard that
+ * crashes after reconciling but before committing can re-run, and the crash-then
+ * -retry path is exactly the path that would double-count.
+ *
+ * So counting an absence must be guarded by "this record has already been
+ * evaluated against this harvest". `last_absence_eval_at` is how this reference
+ * does it. **It is not a mandated field.** T-109 may satisfy the law any way it
+ * likes, and the `Ledger` already carries `last_full_harvest_at`, which under a
+ * fixed `now` answers the same question without a schema change. The law
+ * constrains only that some guard exists.
+ *
+ * `naiveUnguardedAbsence` is this function without the guard, and PT-01 rejects
+ * it.
  *
  * @param {Map<string, any>} next
  * @param {ReadonlySet<string>} seen
@@ -99,6 +161,10 @@ function applyAbsent(next, seen, { completeness, removalConfirmations, now }) {
   for (const [id, record] of next) {
     if (seen.has(id) || isTerminal(record)) continue;
 
+    // THE IDEMPOTENCE GUARD (PT-01). See the note below on why counting an
+    // absence needs one and observing a review does not.
+    if (record.last_absence_eval_at === now) continue;
+
     const streak = record.missing_streak + 1;
     const reached = streak >= removalConfirmations;
 
@@ -107,6 +173,7 @@ function applyAbsent(next, seen, { completeness, removalConfirmations, now }) {
       missing_streak: streak,
       state: reached ? 'tombstoned' : 'unconfirmed',
       tombstoned_at: reached ? now : null,
+      last_absence_eval_at: now,
     });
   }
 }
@@ -231,6 +298,57 @@ export function naiveResurrects(input) {
 }
 
 /**
+ * NAIVE #5 — counts an absence again every time the same harvest is applied.
+ *
+ * This one is different in kind from the four above: it is not a simplification
+ * somebody might make, it is **the reference implementation with one guard
+ * removed**, and it is what you get by writing the streak logic the obvious way.
+ * Absence accumulates, so re-applying accumulates again.
+ *
+ * The damage is bounded but real. A shard that crashes between reconciling and
+ * committing re-runs, and each replay advances every absent record's streak.
+ * With `removal_confirmations` at 3, two replays of one `full` harvest tombstone
+ * records that a single application would have left merely `unconfirmed` —
+ * reviews pulled from a client's site because a job was retried.
+ *
+ * **PT-01 must reject this.**
+ *
+ * @param {NaiveInput} input
+ * @returns {Map<string, any>}
+ */
+export function naiveUnguardedAbsence({
+  prior,
+  observed,
+  completeness,
+  removalConfirmations,
+  now,
+}) {
+  const next = new Map(prior);
+  const seen = applyObserved(next, observed, now);
+
+  // The asymmetry is still here - this is NOT the PT-07 counterexample. The
+  // difference from `applyAbsent` is exactly one line, and it is the missing
+  // one: there is no `last_absence_eval_at` check and no marker written.
+  if (!absenceIsMeaningful(completeness)) return next;
+
+  for (const [id, record] of next) {
+    if (seen.has(id) || isTerminal(record)) continue;
+
+    const streak = record.missing_streak + 1;
+    const reached = streak >= removalConfirmations;
+
+    next.set(id, {
+      ...record,
+      missing_streak: streak,
+      state: reached ? 'tombstoned' : 'unconfirmed',
+      tombstoned_at: reached ? now : null,
+    });
+  }
+
+  return next;
+}
+
+/**
  * @param {any} record
  * @returns {boolean}
  */
@@ -250,17 +368,30 @@ export function isTerminal(record) {
 export function snapshot(ledger) {
   const entries = [...ledger.entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([key, record]) => [
-      key,
-      {
-        content_hash: record.content_hash ?? null,
-        state: record.state ?? null,
-        first_seen_at: record.first_seen_at ?? null,
-        last_seen_at: record.last_seen_at ?? null,
-        missing_streak: record.missing_streak ?? null,
-        tombstoned_at: record.tombstoned_at ?? null,
-      },
-    ]);
+    .map(([key, record]) => [key, sortedFields(record)]);
 
   return JSON.stringify(entries);
+}
+
+/**
+ * Every own field of a record, in key order.
+ *
+ * Deliberately total rather than an allowlist. An allowlist decides in advance
+ * which fields a wrong implementation is allowed to be wrong about, and every
+ * field outside it becomes invisible to every law that compares snapshots —
+ * `naiveNonIdempotent` differs from the reference only in a field an allowlist
+ * would not have thought to include, and PT-01 would have passed against it.
+ *
+ * Key order is normalised because two records with the same fields written in a
+ * different order are the same record, and `JSON.stringify` does not know that.
+ *
+ * @param {Record<string, any>} record
+ * @returns {Record<string, any>}
+ */
+function sortedFields(record) {
+  return Object.fromEntries(
+    Object.keys(record)
+      .sort()
+      .map((key) => [key, record[key]]),
+  );
 }

@@ -1,10 +1,6 @@
 /**
  * Denylist application — permanent, and one-way.
  *
- * ============================================================================
- * SCAFFOLD ONLY — T-107 IMPLEMENTS THE SUPPRESSION LOGIC.
- * ============================================================================
- *
  * ## There is no un-suppress, and there must never be one
  *
  * Suppression exists to satisfy erasure obligations. A path that reverses it is
@@ -36,22 +32,16 @@
  * @property {string} nextState    `suppressed` when denylisted, otherwise the prior state.
  */
 
-/** Returned until T-107 lands. */
-export const NOT_IMPLEMENTED_OUTCOME = Object.freeze({ suppressed: false, nextState: 'active' });
-
 /**
  * Applies the denylist to one identity.
  *
- * @stub DECISION LOGIC PLACEHOLDER — T-107.
- *   Must implement:
- *     - `denylist.has(identityHash)` -> `{ suppressed: true, nextState: 'suppressed' }`,
- *       UNCONDITIONALLY. Not "unless tombstoned", not "unless absent". An
- *       erasure obligation outranks every other state.
- *     - otherwise -> `{ suppressed: false, nextState: priorState }`.
+ * Denylisted means suppressed, **unconditionally**. Not "unless tombstoned",
+ * not "unless absent from this harvest", not "unless it was already removed".
+ * An erasure obligation is not a lifecycle event and does not queue behind one.
  *
- *   The denylist arrives as a Set built from `compliance/denylist.json` on
- *   `main`. This function must not read a file, fetch anything, or know where
- *   the set came from (DR-1, DR-2).
+ * The denylist arrives as a Set built from `compliance/denylist.json` on `main`.
+ * This function does not read a file, fetch anything, or know where the set came
+ * from (DR-1, DR-2).
  *
  * @param {string} identityHash
  * @param {string} priorState
@@ -59,11 +49,11 @@ export const NOT_IMPLEMENTED_OUTCOME = Object.freeze({ suppressed: false, nextSt
  * @returns {SuppressionOutcome}
  */
 export function applySuppression(identityHash, priorState, denylist) {
-  void identityHash;
-  void priorState;
-  void denylist;
+  if (denylist.has(identityHash)) {
+    return Object.freeze({ suppressed: true, nextState: 'suppressed' });
+  }
 
-  return NOT_IMPLEMENTED_OUTCOME;
+  return Object.freeze({ suppressed: false, nextState: priorState });
 }
 
 /**
@@ -80,7 +70,30 @@ export function suppressedAmong(identityHashes, denylist) {
   return [...identityHashes].filter((hash) => denylist.has(hash));
 }
 
-/** @returns {boolean} */
-export function isScaffold() {
-  return true;
+/**
+ * Builds the denylist Set from the parsed `compliance/denylist.json` entries.
+ *
+ * Takes already-parsed data rather than a path: `core/` reads no files (DR-1).
+ * Malformed entries are skipped rather than throwing, because a denylist that
+ * fails to load is a denylist that suppresses nothing, and failing open on an
+ * erasure obligation is the worst available outcome. The caller reports what was
+ * skipped; the set still carries every entry that was usable.
+ *
+ * @param {unknown} entries
+ * @returns {{ denylist: Set<string>, skipped: number }}
+ */
+export function buildDenylist(entries) {
+  const denylist = new Set();
+  let skipped = 0;
+
+  if (!Array.isArray(entries)) return { denylist, skipped };
+
+  for (const entry of entries) {
+    const hash = typeof entry === 'string' ? entry : entry?.identity_hash;
+
+    if (typeof hash === 'string' && hash !== '') denylist.add(hash);
+    else skipped += 1;
+  }
+
+  return { denylist, skipped };
 }

@@ -1,25 +1,19 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import {
-  OUTCOMES,
-  createLedger,
-  insertReview,
-  markMissing,
-  recordHarvest,
-  touchReview,
-} from '../../src/core/model/ledger.mjs';
+import { OUTCOMES } from '../../src/core/model/ledger.mjs';
+import { reconcile } from '../../src/core/reconcile/index.mjs';
 import { classifyCompleteness } from '../../src/core/validate/completeness.mjs';
 import { naiveUniformAbsence } from '../helpers/naive-reconcile.mjs';
-import { buildNormalizedReview } from '../helpers/build-review.mjs';
+import { harvest, identity, ledgerWith, review, T0, T1 } from '../helpers/reconcile-input.mjs';
 
 /**
  * The chaos matrix — CH-01…CH-14 (PH-21, §62).
  *
  * **This file currently contains CH-04 only.** The other thirteen scenarios need
  * the acquisition, gate and publish layers, which are PH-06 and later. CH-04 is
- * here early and deliberately: its two lower protections are already
- * implementable, and it is the scenario the documents single out.
+ * here early and deliberately: it is the scenario the documents single out, and
+ * two of its three protections are already implementable.
  *
  * ============================================================================
  * CH-04 — PAGINATION STALLS AT 12 OF 118
@@ -41,8 +35,7 @@ import { buildNormalizedReview } from '../helpers/build-review.mjs';
  * were not. They were **not looked at**. If the engine cannot tell those two
  * situations apart, one stalled page load starts a countdown that removes a
  * paying client's entire review set three harvests later, with no error raised
- * anywhere, no failed job, and no alert. The engine will have done exactly what
- * it was told.
+ * anywhere, no failed job, and no alert.
  *
  * ## Three protections, asserted separately (IMPL-PLAN §62.2)
  *
@@ -63,8 +56,7 @@ import { buildNormalizedReview } from '../helpers/build-review.mjs';
  * nothing about the rule it names — the precise failure §62 warns about, where
  * *"CH-04 implemented as a count check rather than a completeness check would
  * pass while the protection it tests is absent"*. So protection 3 is an explicit
- * `todo`, and a guard below fails the moment `core/gate/index.mjs` appears, so
- * the gap closes when it can rather than when somebody remembers.
+ * `todo`, and a guard below fails the moment `core/gate/index.mjs` appears.
  *
  * ## The verification requirement is mechanised
  *
@@ -79,42 +71,26 @@ const ADVERTISED_TOTAL = 118;
 const OBSERVED_BEFORE_STALL = 12;
 const NEW_REVIEWS = 2;
 
-const T0 = '2026-02-01T00:00:00.000Z';
-const T1 = '2026-03-01T00:00:00.000Z';
+/** The 118 reviews a previous complete harvest established. */
+const priorReviews = () => Array.from({ length: ADVERTISED_TOTAL }, (_, i) => review(i));
 
-/** @param {number} index */
-const identityFor = (index) => String(index).padStart(32, '0');
+/** The 12 the stalled run managed to read, re-served unchanged. */
+const observedReviews = () => Array.from({ length: OBSERVED_BEFORE_STALL }, (_, i) => review(i));
 
-/**
- * The ledger as it stands after a previous complete harvest: 118 active
- * records, none of them missing.
- *
- * @returns {any}
- */
-function priorLedger() {
-  let ledger = createLedger({ clientSlug: 'acme-dental', listingKey: 'main', now: T0 });
+/** Two reviews that appeared for the first time during the stalled run. */
+const freshReviews = () =>
+  Array.from({ length: NEW_REVIEWS }, (_, i) => review(ADVERTISED_TOTAL + i));
 
-  for (let index = 0; index < ADVERTISED_TOTAL; index += 1) {
-    ledger = insertReview(
-      ledger,
-      buildNormalizedReview({
-        identity_hash: identityFor(index),
-        content_hash: `content-${index}`.padEnd(64, '0'),
-      }),
-      T0,
-    ).ledger;
-  }
-
-  return recordHarvest(ledger, 'full', T0);
-}
+/** The identities the run never reached. */
+const unreachedIds = () =>
+  Array.from({ length: ADVERTISED_TOTAL - OBSERVED_BEFORE_STALL }, (_, i) =>
+    identity(i + OBSERVED_BEFORE_STALL),
+  );
 
 /**
- * The stalled run. The navigator gave up mid-list, so it reports why.
- *
- * `stop_reason` is the ONLY input to completeness (VAL-01). The counts are
- * carried for the report and are deliberately never consulted: `12 < 118` is the
- * tempting signal and it is wrong in both directions, which is what makes
- * "derive from the stop reason" a rule rather than a preference.
+ * The stalled run's report. `stop_reason` is the ONLY input to completeness
+ * (VAL-01); the counts ride along for diagnostics and are never consulted.
+ * `12 < 118` is the tempting signal and it is wrong in both directions.
  */
 const stalledReport = Object.freeze({
   stop_reason: 'stalled',
@@ -122,63 +98,21 @@ const stalledReport = Object.freeze({
   observed_count: OBSERVED_BEFORE_STALL,
 });
 
-/** The 12 identities the run managed to read before the stall. */
-const observedIds = () => Array.from({ length: OBSERVED_BEFORE_STALL }, (_, i) => identityFor(i));
-
-/** The 106 it never reached. */
-const unreachedIds = () =>
-  Array.from({ length: ADVERTISED_TOTAL - OBSERVED_BEFORE_STALL }, (_, i) =>
-    identityFor(i + OBSERVED_BEFORE_STALL),
-  );
-
-/**
- * Applies the stalled harvest the way the engine must: observations are always
- * evidence, absences are evidence only if the harvest looked.
- *
- * @param {any} ledger
- * @param {string} completeness
- * @returns {{ ledger: any, outcomes: string[] }}
- */
-function applyStalledHarvest(ledger, completeness) {
-  const outcomes = [];
-  let next = ledger;
-
-  for (const id of observedIds()) {
-    const result = touchReview(next, id, T1);
-    next = result.ledger;
-    outcomes.push(result.outcome);
-  }
-
-  for (let index = 0; index < NEW_REVIEWS; index += 1) {
-    const result = insertReview(
-      next,
-      buildNormalizedReview({
-        identity_hash: identityFor(ADVERTISED_TOTAL + index),
-        content_hash: `fresh-${index}`.padEnd(64, '0'),
-      }),
-      T1,
-    );
-    next = result.ledger;
-    outcomes.push(result.outcome);
-  }
-
-  for (const id of unreachedIds()) {
-    const result = markMissing(next, id, { completeness, removalConfirmations: 3, now: T1 });
-    next = result.ledger;
-    outcomes.push(result.outcome);
-  }
-
-  return { ledger: recordHarvest(next, completeness, T1), outcomes };
-}
-
 describe('CH-04 — pagination stalls at 12 of 118 (INV-03)', () => {
-  const before = priorLedger();
-  const completeness = classifyCompleteness(stalledReport);
-  const { ledger: after, outcomes } = applyStalledHarvest(before, completeness);
+  const before = ledgerWith(priorReviews(), T0);
+  const out = reconcile(
+    harvest({
+      prior: before,
+      observed: [...observedReviews(), ...freshReviews()],
+      stopReason: 'stalled',
+      now: T1,
+    }),
+  );
+  const after = out.ledger;
 
   describe('protection 1 · partial classification', () => {
     it('classifies the stalled harvest as partial', () => {
-      expect(completeness).toBe('partial');
+      expect(classifyCompleteness(stalledReport)).toBe('partial');
     });
 
     it('derives that from the stop reason, not from the counts', () => {
@@ -194,6 +128,8 @@ describe('CH-04 — pagination stalls at 12 of 118 (INV-03)', () => {
     });
 
     it('does not treat a partial harvest as evidence of absence', () => {
+      const completeness = classifyCompleteness(stalledReport);
+
       expect(completeness).not.toBe('full');
       expect(completeness).not.toBe('full_capped');
     });
@@ -210,14 +146,15 @@ describe('CH-04 — pagination stalls at 12 of 118 (INV-03)', () => {
 
     it('tombstones nothing', () => {
       expect(distinctStates(after)).toEqual(['active']);
-      expect(outcomes).not.toContain(OUTCOMES.TOMBSTONED);
+      expect(out.decisions.tombstoned).toBe(0);
     });
 
     it('reports every absence as HELD rather than MISSING', () => {
       // HELD is the outcome that says "this absence was not counted". A run
       // reporting MISSING for these would be counting them.
-      expect(countOf(outcomes, OUTCOMES.HELD)).toBe(ADVERTISED_TOTAL - OBSERVED_BEFORE_STALL);
-      expect(outcomes).not.toContain(OUTCOMES.MISSING);
+      expect(out.decisions.held).toBe(ADVERTISED_TOTAL - OBSERVED_BEFORE_STALL);
+      expect(out.decisions.missing).toBe(0);
+      expect(countOf(out.decisions.decisions, OUTCOMES.MISSING)).toBe(0);
     });
   });
 
@@ -227,19 +164,25 @@ describe('CH-04 — pagination stalls at 12 of 118 (INV-03)', () => {
       // new reviews on a partial harvest would be a different bug in the
       // opposite direction, and a payload that never grows during a bad week.
       expect(after.records.size).toBe(ADVERTISED_TOTAL + NEW_REVIEWS);
-      expect(after.records.get(identityFor(ADVERTISED_TOTAL))?.state).toBe('active');
+      expect(out.decisions.inserted).toBe(NEW_REVIEWS);
+      expect(after.records.get(identity(ADVERTISED_TOTAL))?.state).toBe('active');
     });
 
     it('advances last_seen_at for the 12 that were observed', () => {
-      expect(after.records.get(identityFor(0))?.last_seen_at).toBe(T1);
-      expect(after.records.get(identityFor(ADVERTISED_TOTAL - 1))?.last_seen_at).toBe(T0);
+      expect(after.records.get(identity(0))?.last_seen_at).toBe(T1);
+      expect(after.records.get(identity(ADVERTISED_TOTAL - 1))?.last_seen_at).toBe(T0);
+      expect(out.decisions.unchanged).toBe(OBSERVED_BEFORE_STALL);
     });
 
     it('does not advance the freshness signal', () => {
       // `last_full_harvest_at` is what a client is told about freshness. A
       // stalled run must not make the data look newly verified.
-      expect(after.last_full_harvest_at).toBe(T0);
+      expect(after.last_full_harvest_at).toBe(before.last_full_harvest_at);
       expect(after.updated_at).toBe(T1);
+    });
+
+    it('leaves the ledger sound', () => {
+      expect(out.invariantViolations).toEqual([]);
     });
   });
 
@@ -274,14 +217,34 @@ describe('CH-04 — pagination stalls at 12 of 118 (INV-03)', () => {
       // reviews are gone from their website.
       let damaged = asPlainMap(before);
 
-      for (let harvest = 0; harvest < 3; harvest += 1) {
-        damaged = withProtectionRemoved(damaged, `2026-03-0${harvest + 1}T00:00:00.000Z`);
+      for (let stall = 0; stall < 3; stall += 1) {
+        damaged = withProtectionRemoved(damaged, `2026-03-0${stall + 1}T00:00:00.000Z`);
       }
 
-      const tombstoned = tombstonedIn(damaged);
+      const tombstoned = countTombstoned(damaged);
 
-      expect(tombstoned.length).toBe(ADVERTISED_TOTAL - OBSERVED_BEFORE_STALL);
-      expect(after.records.size - tombstoned.length).toBe(OBSERVED_BEFORE_STALL + NEW_REVIEWS);
+      expect(tombstoned).toBe(ADVERTISED_TOTAL - OBSERVED_BEFORE_STALL);
+      expect(after.records.size - tombstoned).toBe(OBSERVED_BEFORE_STALL + NEW_REVIEWS);
+    });
+
+    it('and the real reconciler survives the same three stalls untouched', () => {
+      // The other side of the same experiment, which is what makes the number
+      // above meaningful rather than merely alarming.
+      let ledger = before;
+
+      for (let stall = 0; stall < 3; stall += 1) {
+        ledger = reconcile(
+          harvest({
+            prior: ledger,
+            observed: observedReviews(),
+            stopReason: 'stalled',
+            now: `2026-03-0${stall + 1}T00:00:00.000Z`,
+          }),
+        ).ledger;
+      }
+
+      expect(distinctStates(ledger)).toEqual(['active']);
+      expect(distinctStreaks(ledger)).toEqual([0]);
     });
   });
 });
@@ -297,7 +260,10 @@ describe('CH-04 — pagination stalls at 12 of 118 (INV-03)', () => {
 function withProtectionRemoved(prior, now) {
   return naiveUniformAbsence({
     prior,
-    observed: observedIds().map((id) => ({ identity_hash: id, content_hash: 'c' })),
+    observed: observedReviews().map((r) => ({
+      identity_hash: r.identity_hash,
+      content_hash: r.content_hash,
+    })),
     completeness: 'partial',
     removalConfirmations: 3,
     now,
@@ -314,14 +280,9 @@ function distinctStates(ledger) {
   return [...new Set([...ledger.records.values()].map((record) => record.state))].sort();
 }
 
-/** @param {Map<string, any>} ledger @returns {any[]} */
-function tombstonedIn(ledger) {
-  return [...ledger.values()].filter((record) => record.state === 'tombstoned');
-}
-
-/** @param {ReadonlyArray<string>} values @param {string} wanted @returns {number} */
-function countOf(values, wanted) {
-  return values.filter((value) => value === wanted).length;
+/** @param {ReadonlyArray<any>} decisions @param {string} wanted @returns {number} */
+function countOf(decisions, wanted) {
+  return decisions.filter((entry) => entry.outcome === wanted).length;
 }
 
 /**
@@ -371,4 +332,18 @@ function asPlainMap(ledger) {
       },
     ]),
   );
+}
+
+/**
+ * @param {Map<string, any>} ledger
+ * @returns {number}
+ */
+function countTombstoned(ledger) {
+  let total = 0;
+
+  for (const record of ledger.values()) {
+    if (record.state === 'tombstoned') total += 1;
+  }
+
+  return total;
 }

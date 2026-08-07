@@ -1,15 +1,20 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { createLedger } from '../../src/core/model/ledger.mjs';
-import { isScaffold, reconcile } from '../../src/core/reconcile/index.mjs';
+import { reconcile } from '../../src/core/reconcile/index.mjs';
 import {
   naiveNonIdempotent,
   naiveUnguardedAbsence,
-  referenceReconcile,
   snapshot,
 } from '../helpers/naive-reconcile.mjs';
-import { NOW, completeHarvest, ledgerAndHarvest } from '../helpers/reconcile-generators.mjs';
+import {
+  completeHarvest,
+  ledgerAndHarvest,
+  qualifyingStopReason,
+  realLedgerAndHarvest,
+} from '../helpers/reconcile-generators.mjs';
+import { harvest } from '../helpers/reconcile-input.mjs';
+import { ledgerSnapshot } from '../helpers/ledger-snapshot.mjs';
 
 /**
  * PT-01 — reconcile idempotence (T-097, INV-04).
@@ -31,90 +36,74 @@ import { NOW, completeHarvest, ledgerAndHarvest } from '../helpers/reconcile-gen
  * - A permanent push failure is survivable, because the next run reproduces
  *   byte-identical artifacts (CH-12).
  *
- * ## A tension in the law worth knowing about before implementing it
+ * ## The one field that does not get this for free
  *
- * Every field reconciliation writes satisfies this for free *except one*.
- * `missing_streak` is defined by accumulation rather than by the observation, so
- * applying the same harvest twice counts the same absence twice. The literal law
- * is therefore false for the obvious streak implementation, and the counter-
- * example is not exotic — it is one `full` harvest with one absent record.
+ * Every field reconciliation writes is derived from the observation or
+ * explicitly preserved, so re-applying recomputes the same value. `missing_streak`
+ * is the exception: it is defined by **accumulation**, so a second application of
+ * the same harvest counts the same absence twice. At the default of three
+ * confirmations, two replays of one harvest tombstone records that a single
+ * application would have left merely `unconfirmed` — reviews pulled from a
+ * client's site because a job was retried.
  *
- * That is not a defect in the law. It is the law doing its job: it says the
- * streak needs a "this harvest has already been counted" guard, and it says so
- * before the code exists rather than after a retry has tombstoned live reviews.
- * The mechanism is T-109's to choose; `Ledger.last_full_harvest_at` already
- * answers the question under a fixed `now` without a schema change.
- * `naive-reconcile.mjs` uses a per-record marker, and this law asserts only that
- * *some* guard is present, by rejecting the version with none.
+ * `decideAbsent` guards it with `alreadyCounted`, which the merge derives from
+ * `Ledger.last_full_harvest_at` under a fixed `now`. No new field was needed;
+ * the ledger already recorded when it last absorbed a qualifying harvest.
  *
- * ## What is currently proven, honestly stated
- *
- * `core/reconcile/index.mjs` is a scaffold returning the prior ledger unchanged,
- * which is trivially idempotent. Its conformance below proves nothing and is
- * labelled as such. The law's teeth are the two rejections. T-109 turns the
- * scaffold assertion into a real one.
+ * The law is asserted against the real reconciler **and** asserted to reject the
+ * unguarded version, so the guard cannot be removed without a failure.
  */
 
 const RUNS = 1000;
 
-/**
- * Whether a generated case leaves at least one prior record unobserved, which is
- * the only way the streak path runs at all.
- *
- * @param {{ prior: Map<string, any>, observed: ReadonlyArray<any> }} sample
- * @returns {boolean}
- */
-function hasAbsentRecord({ prior, observed }) {
-  const observedIds = new Set(observed.map((entry) => entry.identity_hash));
-
-  return [...prior.keys()].some((id) => !observedIds.has(id));
-}
-
 describe('PT-01 — reconciliation is idempotent (INV-04)', () => {
   it('applying the same harvest twice equals applying it once', () => {
     fc.assert(
-      fc.property(ledgerAndHarvest(), (input) => {
-        const once = referenceReconcile(input);
-        const twice = referenceReconcile({ ...input, prior: once });
+      fc.property(realLedgerAndHarvest(), ({ prior, observed, stopReason, now }) => {
+        const once = reconcile(harvest({ prior, observed, stopReason, now }));
+        const twice = reconcile(harvest({ prior: once.ledger, observed, stopReason, now }));
 
-        return snapshot(twice) === snapshot(once);
+        return ledgerSnapshot(twice.ledger) === ledgerSnapshot(once.ledger);
       }),
       { numRuns: RUNS },
     );
   });
 
   it('holds when absence is being counted, which is the hard case', () => {
-    // Restricted to full/full_capped so the streak path always runs. On a
-    // partial harvest the absence half returns immediately and idempotence is
+    // Restricted to stop reasons that classify as `full`/`full_capped`, so the
+    // streak path always runs. On an inconclusive harvest idempotence is
     // inherited from PT-07 rather than tested here.
     fc.assert(
-      fc.property(ledgerAndHarvest({ completeness: completeHarvest() }), (input) => {
-        const once = referenceReconcile(input);
-        const twice = referenceReconcile({ ...input, prior: once });
+      fc.property(
+        realLedgerAndHarvest({ stopReason: qualifyingStopReason() }),
+        ({ prior, observed, stopReason, now }) => {
+          const once = reconcile(harvest({ prior, observed, stopReason, now }));
+          const twice = reconcile(harvest({ prior: once.ledger, observed, stopReason, now }));
 
-        return snapshot(twice) === snapshot(once);
-      }),
+          return ledgerSnapshot(twice.ledger) === ledgerSnapshot(once.ledger);
+        },
+      ),
       { numRuns: RUNS },
     );
   });
 
   it('holds for ANY number of applications, not just the second', () => {
-    // Distinct from the two-application case, and not implied by it in practice:
-    // a guard that clears itself after use satisfies f(f(x)) = f(x) and then
-    // drifts on the third application. A shard can be retried more than once,
-    // so "twice is safe" is not the claim that needs to be true.
+    // Not implied by the two-application case in practice: a guard that clears
+    // itself after use satisfies f(f(x)) = f(x) and then drifts on the third.
+    // A shard can be retried more than once.
     fc.assert(
       fc.property(
-        ledgerAndHarvest({ completeness: completeHarvest() }),
+        realLedgerAndHarvest({ stopReason: qualifyingStopReason() }),
         fc.integer({ min: 2, max: 5 }),
-        (input, applications) => {
-          let ledger = referenceReconcile(input);
+        ({ prior, observed, stopReason, now }, applications) => {
+          const once = reconcile(harvest({ prior, observed, stopReason, now }));
+          let ledger = once.ledger;
 
           for (let pass = 1; pass < applications; pass += 1) {
-            ledger = referenceReconcile({ ...input, prior: ledger });
+            ledger = reconcile(harvest({ prior: ledger, observed, stopReason, now })).ledger;
           }
 
-          return snapshot(ledger) === snapshot(referenceReconcile(input));
+          return ledgerSnapshot(ledger) === ledgerSnapshot(once.ledger);
         },
       ),
       { numRuns: RUNS },
@@ -125,11 +114,23 @@ describe('PT-01 — reconciliation is idempotent (INV-04)', () => {
     // Idempotence is unfalsifiable if the first application edited its input:
     // the comparison would be between two views of one mutated object.
     fc.assert(
-      fc.property(ledgerAndHarvest(), (input) => {
-        const before = snapshot(input.prior);
-        referenceReconcile(input);
+      fc.property(realLedgerAndHarvest(), ({ prior, observed, stopReason, now }) => {
+        const before = ledgerSnapshot(prior);
+        reconcile(harvest({ prior, observed, stopReason, now }));
 
-        return snapshot(input.prior) === before;
+        return ledgerSnapshot(prior) === before;
+      }),
+      { numRuns: RUNS },
+    );
+  });
+
+  it('reports no invariant violations on either application', () => {
+    fc.assert(
+      fc.property(realLedgerAndHarvest(), ({ prior, observed, stopReason, now }) => {
+        const once = reconcile(harvest({ prior, observed, stopReason, now }));
+        const twice = reconcile(harvest({ prior: once.ledger, observed, stopReason, now }));
+
+        return once.invariantViolations.length === 0 && twice.invariantViolations.length === 0;
       }),
       { numRuns: RUNS },
     );
@@ -152,7 +153,7 @@ describe('PT-01 — reconciliation is idempotent (INV-04)', () => {
   });
 
   it('REJECTS a streak that is counted again on every application', () => {
-    // The reference with its idempotence guard removed. This is the one an
+    // The real reconciler with its idempotence guard removed. This is the one an
     // implementer actually writes, and the one that tombstones live reviews
     // because a job was retried.
     const result = fc.check(
@@ -172,32 +173,24 @@ describe('PT-01 — reconciliation is idempotent (INV-04)', () => {
     // A generator whose harvests always observed the whole ledger would make
     // both rejections above impossible, and the law would pass for the wrong
     // reason. Every case must have something absent for a streak to count.
-    const samples = fc.sample(ledgerAndHarvest({ completeness: completeHarvest() }), {
+    const samples = fc.sample(realLedgerAndHarvest({ stopReason: qualifyingStopReason() }), {
       numRuns: 200,
       seed: 11,
     });
 
-    const withAbsences = samples.filter(hasAbsentRecord);
-
-    expect(withAbsences.length).toBe(samples.length);
-  });
-
-  it('is vacuous against the scaffold, and says so', () => {
-    // Stated rather than hidden. A function that changes nothing is trivially
-    // idempotent; this proves the call shape, not the law. T-109 makes it real.
-    expect(isScaffold()).toBe(true);
-
-    const input = {
-      prior: createLedger({ clientSlug: 'c', listingKey: 'main', now: NOW }),
-      observed: [],
-      report: /** @type {any} */ ({ stop_reason: 'target_reached' }),
-      config: /** @type {any} */ ({ removalConfirmations: 3, denylist: new Set() }),
-      now: NOW,
-    };
-
-    const once = reconcile(input);
-    const twice = reconcile({ ...input, prior: once.ledger });
-
-    expect(twice.ledger).toBe(once.ledger);
+    expect(samples.every(hasAbsentRecord)).toBe(true);
   });
 });
+
+/**
+ * Whether a generated case leaves at least one prior record unobserved, which is
+ * the only way the streak path runs at all.
+ *
+ * @param {{ prior: any, observed: ReadonlyArray<any> }} sample
+ * @returns {boolean}
+ */
+function hasAbsentRecord({ prior, observed }) {
+  const observedIds = new Set(observed.map((entry) => entry.identity_hash));
+
+  return [...prior.records.keys()].some((id) => !observedIds.has(id));
+}

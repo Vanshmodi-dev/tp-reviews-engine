@@ -1,15 +1,17 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { createLedger } from '../../src/core/model/ledger.mjs';
-import { isScaffold, reconcile } from '../../src/core/reconcile/index.mjs';
-import { naiveOrderDependent, referenceReconcile, snapshot } from '../helpers/naive-reconcile.mjs';
+import { reconcile } from '../../src/core/reconcile/index.mjs';
+import { naiveOrderDependent, snapshot } from '../helpers/naive-reconcile.mjs';
 import {
-  NOW,
   completeHarvest,
   ledgerAndHarvestShuffled,
   permutationOf,
+  qualifyingStopReason,
+  realLedgerAndHarvest,
 } from '../helpers/reconcile-generators.mjs';
+import { harvest } from '../helpers/reconcile-input.mjs';
+import { ledgerSnapshot } from '../helpers/ledger-snapshot.mjs';
 
 /**
  * PT-02 — reconcile commutativity (T-098).
@@ -37,17 +39,11 @@ import {
  * list re-rendered while it was being read. Something must choose a survivor,
  * and "last write wins" is the natural choice and the wrong one.
  *
- * DUP-03 requires the survivor be chosen by a **total ordering** over the
- * records themselves. This is the law that makes that requirement enforceable,
- * and it is why the generator produces duplicates deliberately: with unique
- * identities every reconciler is commutative, including the broken ones, and
- * the law would pass against anything.
- *
- * ## What is currently proven, honestly stated
- *
- * `core/reconcile/index.mjs` ignores `observed` entirely, so it is commutative
- * vacuously. That case is labelled. The law's teeth are the rejection of
- * `naiveOrderDependent`. T-105 and T-109 make it real.
+ * `collapseIntraRun` chooses by TR-REC-002's total ordering — more non-null
+ * fields, then longer text, then the earlier node ordinal, then content hash —
+ * every test of which reads the records themselves rather than their positions
+ * (DUP-03). The node ordinal is a *field*, so reading it does not smuggle
+ * arrival order back in (TR-EXT-031).
  */
 
 const RUNS = 1000;
@@ -55,28 +51,59 @@ const RUNS = 1000;
 describe('PT-02 — reconciliation is order-independent', () => {
   it('a shuffled harvest yields an identical ledger', () => {
     fc.assert(
-      fc.property(ledgerAndHarvestShuffled(), ({ input, shuffled }) => {
-        const inOrder = referenceReconcile(input);
-        const reordered = referenceReconcile({ ...input, observed: shuffled });
+      fc.property(
+        realLedgerAndHarvest().chain((sample) =>
+          fc.record({ sample: fc.constant(sample), shuffled: permutationOf(sample.observed) }),
+        ),
+        ({ sample, shuffled }) => {
+          const { prior, observed, stopReason, now } = sample;
+          const inOrder = reconcile(harvest({ prior, observed, stopReason, now }));
+          const reordered = reconcile(harvest({ prior, observed: shuffled, stopReason, now }));
 
-        return snapshot(reordered) === snapshot(inOrder);
-      }),
+          return ledgerSnapshot(reordered.ledger) === ledgerSnapshot(inOrder.ledger);
+        },
+      ),
       { numRuns: RUNS },
     );
   });
 
   it('holds when absence is also being counted', () => {
-    // The absence half iterates the ledger rather than the harvest, so it has
-    // its own opportunity to be order-sensitive - particularly since it writes
-    // to the same map it is iterating.
+    // The absence pass iterates the ledger rather than the harvest, so it has
+    // its own opportunity to be order-sensitive.
     fc.assert(
       fc.property(
-        ledgerAndHarvestShuffled({ completeness: completeHarvest() }),
-        ({ input, shuffled }) => {
-          const inOrder = referenceReconcile(input);
-          const reordered = referenceReconcile({ ...input, observed: shuffled });
+        realLedgerAndHarvest({ stopReason: qualifyingStopReason() }).chain((sample) =>
+          fc.record({ sample: fc.constant(sample), shuffled: permutationOf(sample.observed) }),
+        ),
+        ({ sample, shuffled }) => {
+          const { prior, observed, stopReason, now } = sample;
+          const inOrder = reconcile(harvest({ prior, observed, stopReason, now }));
+          const reordered = reconcile(harvest({ prior, observed: shuffled, stopReason, now }));
 
-          return snapshot(reordered) === snapshot(inOrder);
+          return ledgerSnapshot(reordered.ledger) === ledgerSnapshot(inOrder.ledger);
+        },
+      ),
+      { numRuns: RUNS },
+    );
+  });
+
+  it('produces an identical decision tally under any ordering', () => {
+    // The ledger being equal is not quite enough. A reconciler that reached the
+    // same ledger by a different route would report different counts, and the
+    // decision log is what an operator reads to understand a run.
+    fc.assert(
+      fc.property(
+        realLedgerAndHarvest().chain((sample) =>
+          fc.record({ sample: fc.constant(sample), shuffled: permutationOf(sample.observed) }),
+        ),
+        ({ sample, shuffled }) => {
+          const { prior, observed, stopReason, now } = sample;
+          const inOrder = reconcile(harvest({ prior, observed, stopReason, now })).decisions;
+          const reordered = reconcile(
+            harvest({ prior, observed: shuffled, stopReason, now }),
+          ).decisions;
+
+          return tallyOf(inOrder) === tallyOf(reordered);
         },
       ),
       { numRuns: RUNS },
@@ -89,13 +116,13 @@ describe('PT-02 — reconciliation is order-independent', () => {
     // there is a single answer, not a pair that happen to coincide.
     fc.assert(
       fc.property(
-        ledgerAndHarvestShuffled({ completeness: completeHarvest() }).chain(({ input }) =>
+        realLedgerAndHarvest({ stopReason: qualifyingStopReason() }).chain((sample) =>
           fc.record({
-            input: fc.constant(input),
-            orderings: fc.array(permutationOf(input.observed), { minLength: 2, maxLength: 4 }),
+            sample: fc.constant(sample),
+            orderings: fc.array(permutationOf(sample.observed), { minLength: 2, maxLength: 4 }),
           }),
         ),
-        ({ input, orderings }) => allOrderingsAgree(input, orderings),
+        ({ sample, orderings }) => allOrderingsAgree(sample, orderings),
       ),
       { numRuns: 300 },
     );
@@ -122,60 +149,40 @@ describe('PT-02 — reconciliation is order-independent', () => {
 
   it('shows the generator produces the duplicates the law depends on', () => {
     // Without intra-run duplicates every reconciler is commutative, including
-    // the broken one, and the rejection above becomes impossible. This asserts
-    // the generator reaches the case rather than assuming it.
-    const samples = fc.sample(ledgerAndHarvestShuffled({ completeness: completeHarvest() }), {
-      numRuns: 200,
-      seed: 13,
-    });
-
-    const withDuplicates = samples.filter(({ input }) => hasDuplicateIdentity(input.observed));
-    const reordered = samples.filter(
-      ({ input, shuffled }) => !sameOrder(input.observed, shuffled) && shuffled.length > 1,
-    );
+    // the broken one, and the rejection above becomes impossible.
+    const samples = fc.sample(realLedgerAndHarvest(), { numRuns: 200, seed: 13 });
+    const withDuplicates = samples.filter(({ observed }) => hasDuplicateIdentity(observed));
 
     expect(withDuplicates.length).toBeGreaterThan(0);
-    expect(reordered.length).toBeGreaterThan(0);
-  });
-
-  it('is vacuous against the scaffold, and says so', () => {
-    // The scaffold ignores `observed` completely, so shuffling it cannot change
-    // anything. This proves the call shape, not the law.
-    expect(isScaffold()).toBe(true);
-
-    const base = {
-      prior: createLedger({ clientSlug: 'c', listingKey: 'main', now: NOW }),
-      report: /** @type {any} */ ({ stop_reason: 'target_reached' }),
-      config: /** @type {any} */ ({ removalConfirmations: 3, denylist: new Set() }),
-      now: NOW,
-    };
-
-    const forward = reconcile({
-      ...base,
-      observed: [{ identity_hash: 'a' }, { identity_hash: 'b' }],
-    });
-    const backward = reconcile({
-      ...base,
-      observed: [{ identity_hash: 'b' }, { identity_hash: 'a' }],
-    });
-
-    expect(forward.ledger.records.size).toBe(backward.ledger.records.size);
   });
 });
 
 /**
- * Whether every ordering of one harvest produces the same ledger.
- *
- * @param {any} input
+ * @param {any} sample
  * @param {ReadonlyArray<any[]>} orderings
  * @returns {boolean}
  */
-function allOrderingsAgree(input, orderings) {
-  const canonical = snapshot(referenceReconcile(input));
+function allOrderingsAgree({ prior, observed, stopReason, now }, orderings) {
+  const canonical = ledgerSnapshot(reconcile(harvest({ prior, observed, stopReason, now })).ledger);
 
   return orderings.every(
-    (observed) => snapshot(referenceReconcile({ ...input, observed })) === canonical,
+    (ordering) =>
+      ledgerSnapshot(reconcile(harvest({ prior, observed: ordering, stopReason, now })).ledger) ===
+      canonical,
   );
+}
+
+/**
+ * The decision counts, without the per-record list — which is ordered by the
+ * pass that produced it and is not itself a commutativity claim.
+ *
+ * @param {any} decisions
+ * @returns {string}
+ */
+function tallyOf(decisions) {
+  const { decisions: _perRecord, ...counts } = decisions;
+
+  return JSON.stringify(counts);
 }
 
 /**
@@ -184,13 +191,4 @@ function allOrderingsAgree(input, orderings) {
  */
 function hasDuplicateIdentity(observed) {
   return new Set(observed.map((entry) => entry.identity_hash)).size < observed.length;
-}
-
-/**
- * @param {ReadonlyArray<any>} left
- * @param {ReadonlyArray<any>} right
- * @returns {boolean}
- */
-function sameOrder(left, right) {
-  return left.every((entry, index) => entry.order_marker === right[index]?.order_marker);
 }

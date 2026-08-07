@@ -111,6 +111,77 @@ function withRecord(ledger, identityHash, record, now) {
 }
 
 /**
+ * What a mutation would produce, without producing it.
+ *
+ * @typedef {object} RecordChange
+ * @property {LedgerReview | null} record `null` when the rule says change nothing.
+ * @property {string} outcome
+ */
+
+/**
+ * @param {LedgerReview | null} record
+ * @param {string} outcome
+ * @returns {RecordChange}
+ */
+function change(record, outcome) {
+  return { record, outcome };
+}
+
+/**
+ * Applies many changes in **one** Map copy.
+ *
+ * ## Why this exists rather than a loop over the single-record functions
+ *
+ * `withRecord` copies the whole record Map, which is correct — a reconciler that
+ * crashes halfway must leave its input intact for the retry — and fine for one
+ * record. Calling it once per record is not: merging *n* reviews performs *n*
+ * copies of an *n*-entry Map, which is O(n²) allocation and the same defect
+ * IR-24 describes, reintroduced one level up from the array it warns about.
+ *
+ * It is invisible at the size of a unit test and fatal at the size of a real
+ * listing: a 5,000-review merge does 25 million entry copies. The budget suite
+ * in `tests/budgets/reconcile.performance.test.mjs` is what catches it, because
+ * nothing else would until a client's run timed out.
+ *
+ * The field arithmetic still lives in the `next*` functions below, so batching
+ * changes how many times the Map is copied and nothing about what the records
+ * contain.
+ *
+ * @param {Ledger} ledger
+ * @param {Iterable<[string, RecordChange]>} changes
+ * @param {string} now
+ * @returns {Ledger}
+ */
+export function applyBatch(ledger, changes, now) {
+  const records = new Map(ledger.records);
+  let mutated = false;
+
+  for (const [identityHash, entry] of changes) {
+    if (entry.record === null) continue;
+
+    records.set(identityHash, Object.freeze(entry.record));
+    mutated = true;
+  }
+
+  if (!mutated) return ledger;
+
+  return Object.freeze({ ...ledger, records, updated_at: now });
+}
+
+/**
+ * @param {Ledger} ledger
+ * @param {string} identityHash
+ * @param {RecordChange} entry
+ * @param {string} now
+ * @returns {{ ledger: Ledger, outcome: string }}
+ */
+function applyOne(ledger, identityHash, entry, now) {
+  if (entry.record === null) return { ledger, outcome: entry.outcome };
+
+  return { ledger: withRecord(ledger, identityHash, entry.record, now), outcome: entry.outcome };
+}
+
+/**
  * Reads only `state`, so it is typed to that rather than to a whole record:
  * asking a one-field question should not require constructing one.
  *
@@ -137,29 +208,36 @@ export function isTerminal(record) {
  * @returns {{ ledger: Ledger, outcome: string }}
  */
 export function insertReview(ledger, review, now) {
-  const existing = ledger.records.get(review.identity_hash);
+  const entry = nextInsert(ledger.records.get(review.identity_hash), review, now);
 
-  if (isTerminal(existing)) {
-    return { ledger, outcome: OUTCOMES.IGNORED_TERMINAL };
-  }
+  return applyOne(ledger, review.identity_hash, entry, now);
+}
 
-  /** @type {LedgerReview} */
-  const record = {
-    review,
-    state: 'active',
-    first_seen_at: now,
-    last_seen_at: now,
-    last_updated_at: now,
-    revision: 1,
-    missing_streak: 0,
-    tombstoned_at: null,
-    content_hash_history: Object.freeze([]),
-  };
+/**
+ * The record an INSERT would produce. Pure.
+ *
+ * @param {LedgerReview | undefined} existing
+ * @param {NormalizedReview} review
+ * @param {string} now
+ * @returns {RecordChange}
+ */
+export function nextInsert(existing, review, now) {
+  if (isTerminal(existing)) return change(null, OUTCOMES.IGNORED_TERMINAL);
 
-  return {
-    ledger: withRecord(ledger, review.identity_hash, record, now),
-    outcome: OUTCOMES.INSERTED,
-  };
+  return change(
+    {
+      review,
+      state: 'active',
+      first_seen_at: now,
+      last_seen_at: now,
+      last_updated_at: now,
+      revision: 1,
+      missing_streak: 0,
+      tombstoned_at: null,
+      content_hash_history: Object.freeze([]),
+    },
+    OUTCOMES.INSERTED,
+  );
 }
 
 /**
@@ -178,10 +256,22 @@ export function insertReview(ledger, review, now) {
  * @returns {{ ledger: Ledger, outcome: string }}
  */
 export function updateReview(ledger, review, now) {
-  const existing = ledger.records.get(review.identity_hash);
+  const entry = nextUpdate(ledger.records.get(review.identity_hash), review, now);
 
-  if (existing === undefined) return { ledger, outcome: OUTCOMES.ABSENT };
-  if (isTerminal(existing)) return { ledger, outcome: OUTCOMES.IGNORED_TERMINAL };
+  return applyOne(ledger, review.identity_hash, entry, now);
+}
+
+/**
+ * The record an UPDATE would produce. Pure.
+ *
+ * @param {LedgerReview | undefined} existing
+ * @param {NormalizedReview} review
+ * @param {string} now
+ * @returns {RecordChange}
+ */
+export function nextUpdate(existing, review, now) {
+  if (existing === undefined) return change(null, OUTCOMES.ABSENT);
+  if (isTerminal(existing)) return change(null, OUTCOMES.IGNORED_TERMINAL);
 
   /** @type {LedgerReview} */
   const record = {
@@ -207,10 +297,7 @@ export function updateReview(ledger, review, now) {
     ]),
   };
 
-  return {
-    ledger: withRecord(ledger, review.identity_hash, record, now),
-    outcome: OUTCOMES.UPDATED,
-  };
+  return change(record, OUTCOMES.UPDATED);
 }
 
 /**
@@ -227,14 +314,26 @@ export function updateReview(ledger, review, now) {
  * @returns {{ ledger: Ledger, outcome: string }}
  */
 export function touchReview(ledger, identityHash, now) {
-  const existing = ledger.records.get(identityHash);
+  const entry = nextTouch(ledger.records.get(identityHash), now);
 
-  if (existing === undefined) return { ledger, outcome: OUTCOMES.ABSENT };
-  if (isTerminal(existing)) return { ledger, outcome: OUTCOMES.IGNORED_TERMINAL };
+  return applyOne(ledger, identityHash, entry, now);
+}
 
-  const record = { ...existing, last_seen_at: now, missing_streak: 0, state: 'active' };
+/**
+ * The record an UNCHANGED observation would produce. Pure.
+ *
+ * @param {LedgerReview | undefined} existing
+ * @param {string} now
+ * @returns {RecordChange}
+ */
+export function nextTouch(existing, now) {
+  if (existing === undefined) return change(null, OUTCOMES.ABSENT);
+  if (isTerminal(existing)) return change(null, OUTCOMES.IGNORED_TERMINAL);
 
-  return { ledger: withRecord(ledger, identityHash, record, now), outcome: OUTCOMES.UNCHANGED };
+  return change(
+    { ...existing, last_seen_at: now, missing_streak: 0, state: 'active' },
+    OUTCOMES.UNCHANGED,
+  );
 }
 
 /**
@@ -258,30 +357,42 @@ export function touchReview(ledger, identityHash, now) {
  * @returns {{ ledger: Ledger, outcome: string }}
  */
 export function markMissing(ledger, identityHash, { completeness, removalConfirmations, now }) {
-  const existing = ledger.records.get(identityHash);
+  const entry = nextMissing(ledger.records.get(identityHash), {
+    completeness,
+    removalConfirmations,
+    now,
+  });
 
-  if (existing === undefined) return { ledger, outcome: OUTCOMES.ABSENT };
-  if (isTerminal(existing)) return { ledger, outcome: OUTCOMES.IGNORED_TERMINAL };
+  return applyOne(ledger, identityHash, entry, now);
+}
+
+/**
+ * The record a MISSING observation would produce. Pure, and the single place the
+ * streak arithmetic lives.
+ *
+ * @param {LedgerReview | undefined} existing
+ * @param {{ completeness: string, removalConfirmations: number, now: string }} options
+ * @returns {RecordChange}
+ */
+export function nextMissing(existing, { completeness, removalConfirmations, now }) {
+  if (existing === undefined) return change(null, OUTCOMES.ABSENT);
+  if (isTerminal(existing)) return change(null, OUTCOMES.IGNORED_TERMINAL);
 
   // The asymmetry. Not a guard clause to tidy away.
-  if (!absenceIsMeaningful(completeness)) {
-    return { ledger, outcome: OUTCOMES.HELD };
-  }
+  if (!absenceIsMeaningful(completeness)) return change(null, OUTCOMES.HELD);
 
   const streak = existing.missing_streak + 1;
   const reached = streak >= removalConfirmations;
 
-  const record = {
-    ...existing,
-    missing_streak: streak,
-    state: reached ? 'tombstoned' : 'unconfirmed',
-    tombstoned_at: reached ? now : null,
-  };
-
-  return {
-    ledger: withRecord(ledger, identityHash, record, now),
-    outcome: reached ? OUTCOMES.TOMBSTONED : OUTCOMES.MISSING,
-  };
+  return change(
+    {
+      ...existing,
+      missing_streak: streak,
+      state: reached ? 'tombstoned' : 'unconfirmed',
+      tombstoned_at: reached ? now : null,
+    },
+    reached ? OUTCOMES.TOMBSTONED : OUTCOMES.MISSING,
+  );
 }
 
 /**
@@ -297,13 +408,25 @@ export function markMissing(ledger, identityHash, { completeness, removalConfirm
  * @returns {{ ledger: Ledger, outcome: string }}
  */
 export function suppressReview(ledger, identityHash, now) {
-  const existing = ledger.records.get(identityHash);
+  const entry = nextSuppress(ledger.records.get(identityHash));
 
-  if (existing === undefined) return { ledger, outcome: OUTCOMES.ABSENT };
+  return applyOne(ledger, identityHash, entry, now);
+}
 
-  const record = { ...existing, state: 'suppressed' };
+/**
+ * The record a SUPPRESS would produce. Pure.
+ *
+ * Takes no clock: suppression records no timestamp of its own. When it happened
+ * is answered by the denylist entry on `main`, which is version-controlled and
+ * carries the reason — a second copy in the ledger could disagree with it.
+ *
+ * @param {LedgerReview | undefined} existing
+ * @returns {RecordChange}
+ */
+export function nextSuppress(existing) {
+  if (existing === undefined) return change(null, OUTCOMES.ABSENT);
 
-  return { ledger: withRecord(ledger, identityHash, record, now), outcome: OUTCOMES.SUPPRESSED };
+  return change({ ...existing, state: 'suppressed' }, OUTCOMES.SUPPRESSED);
 }
 
 /**

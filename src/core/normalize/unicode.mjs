@@ -139,5 +139,18 @@ export function boundGraphemes(text, max) {
     .map((cluster) => cluster.segment)
     .join('');
 
-  return { text: out, clipped: true };
+  // The cut lands wherever the bound falls, which can be in the middle of a run
+  // of spaces, so the bounded text needs its trailing edge cleaned again.
+  //
+  // Step 5 already canonicalised whitespace, but this step runs after it
+  // (EDR-020 applies the bound to final content), so it can reintroduce exactly
+  // what step 5 removed. `normalize('a'.repeat(4999) + '  tail')` produced text
+  // ending in a space until this line existed, which breaks the
+  // no-surrounding-whitespace guarantee that PT-10 asserts and that every
+  // payload consumer relies on.
+  //
+  // Only the trailing edge can be affected: the slice always starts at cluster
+  // zero, so it cannot create leading whitespace that step 5 did not already
+  // remove.
+  return { text: out.trimEnd(), clipped: true };
 }

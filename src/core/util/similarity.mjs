@@ -62,6 +62,64 @@ function bigrams(text) {
 }
 
 /**
+ * Everything about one string that a comparison needs.
+ *
+ * @typedef {object} BigramProfile
+ * @property {string} folded
+ * @property {Map<string, number>} grams
+ * @property {number} total
+ */
+
+/**
+ * Precomputes a string's comparison profile.
+ *
+ * Exported for callers that compare one text against **many**. `similarity`
+ * builds both profiles on every call, which is right for a single comparison and
+ * wasteful in a loop: comparing *n* texts pairwise rebuilds each profile *n*
+ * times. Near-duplicate detection is exactly that shape, so it builds each
+ * profile once and calls {@link similarityOf}.
+ *
+ * @param {string} text
+ * @returns {BigramProfile}
+ */
+export function bigramProfile(text) {
+  const folded = foldForComparison(text);
+  const grams = bigrams(folded);
+
+  let total = 0;
+  for (const n of grams.values()) total += n;
+
+  return { folded, grams, total };
+}
+
+/**
+ * Similarity between two precomputed profiles.
+ *
+ * @param {BigramProfile} left
+ * @param {BigramProfile} right
+ * @returns {number}
+ */
+export function similarityOf(left, right) {
+  if (left.folded === right.folded) return 1;
+  if (left.folded === '' || right.folded === '') return 0;
+
+  // A single character produces no bigrams; equality is handled above, so
+  // anything reaching here with no bigrams shares nothing.
+  if (left.total === 0 || right.total === 0) return 0;
+
+  // Iterating the smaller map keeps the cost proportional to the shorter text
+  // rather than to whichever argument happened to be passed first.
+  const [fewer, more] = left.grams.size <= right.grams.size ? [left, right] : [right, left];
+
+  let shared = 0;
+  for (const [gram, count] of fewer.grams) {
+    shared += Math.min(count, more.grams.get(gram) ?? 0);
+  }
+
+  return (2 * shared) / (left.total + right.total);
+}
+
+/**
  * Similarity between two strings, from 0 (nothing in common) to 1 (identical
  * after folding).
  *
@@ -70,29 +128,7 @@ function bigrams(text) {
  * @returns {number}
  */
 export function similarity(a, b) {
-  const left = foldForComparison(a);
-  const right = foldForComparison(b);
-
-  if (left === right) return 1;
-  if (left === '' || right === '') return 0;
-
-  const leftGrams = bigrams(left);
-  const rightGrams = bigrams(right);
-
-  // A single character produces no bigrams; fall back to equality, already
-  // handled above, so anything reaching here with no bigrams shares nothing.
-  let leftTotal = 0;
-  for (const n of leftGrams.values()) leftTotal += n;
-  let rightTotal = 0;
-  for (const n of rightGrams.values()) rightTotal += n;
-  if (leftTotal === 0 || rightTotal === 0) return 0;
-
-  let shared = 0;
-  for (const [gram, count] of leftGrams) {
-    shared += Math.min(count, rightGrams.get(gram) ?? 0);
-  }
-
-  return (2 * shared) / (leftTotal + rightTotal);
+  return similarityOf(bigramProfile(a), bigramProfile(b));
 }
 
 /**

@@ -1,10 +1,6 @@
 /**
  * Confidence-gated removal and tombstoning.
  *
- * ============================================================================
- * SCAFFOLD ONLY — T-106 IMPLEMENTS THE REMOVAL LOGIC.
- * ============================================================================
- *
  * ## The one thing this module must never do
  *
  * **Delete anything from the ledger.** Removal here means "stop publishing and
@@ -32,6 +28,17 @@
  */
 
 /**
+ * The permitted range for `removal_confirmations` (TRD §8.4.4).
+ *
+ * Below two, a single unlucky harvest removes a review — the confirmation window
+ * would exist in name only. Above ten, at a six-hour cadence, a genuinely deleted
+ * review stays published for two and a half days, which is long enough for the
+ * removal to be somebody's complaint rather than the engine's decision.
+ */
+const MIN_CONFIRMATIONS = 2;
+const MAX_CONFIRMATIONS = 10;
+
+/**
  * @typedef {object} RemovalPolicy
  * @property {number} removalConfirmations Consecutive qualifying harvests required. Range 2-10.
  * @property {boolean} keepTombstones      MUST be true in production (TRD §8.4.4).
@@ -45,31 +52,42 @@
  * @property {string | null} tombstonedAt RFC 3339 when tombstoning, else null.
  */
 
-/** Returned until T-106 lands. Deliberately the "change nothing" outcome. */
-export const NOT_IMPLEMENTED_OUTCOME = Object.freeze({
-  tombstone: false,
-  nextStreak: 0,
-  nextState: 'active',
-  tombstonedAt: null,
-});
+/**
+ * The outcome for a record that is not to be touched.
+ *
+ * @param {any} prior
+ * @returns {RemovalOutcome}
+ */
+function unchangedOutcome(prior) {
+  return Object.freeze({
+    tombstone: false,
+    nextStreak: prior.missing_streak,
+    nextState: prior.state,
+    tombstonedAt: prior.tombstoned_at ?? null,
+  });
+}
 
 /**
  * Decides whether an absent record crosses the removal threshold.
  *
- * @stub DECISION LOGIC PLACEHOLDER — T-106.
- *   Must implement TRD §22.5 removal gating:
- *     - A record whose state is already `tombstoned` or `suppressed` is
- *       returned unchanged. Terminal is terminal (PT-03).
- *     - `nextStreak = priorStreak + 1`, and ONLY when the harvest qualifies.
- *       The caller must not invoke this at all for a partial harvest; this
- *       function asserting completeness again would put the asymmetry in two
- *       places, and two copies of one rule is how they diverge.
- *     - `nextStreak >= policy.removalConfirmations` -> tombstone, state
- *       `tombstoned`, `tombstonedAt = now`.
- *     - otherwise -> state `unconfirmed`, still published, marked unconfirmed.
+ * ## What this function deliberately does NOT check
  *
- *   AN UNCONFIRMED RECORD IS STILL PUBLISHED, DELIBERATELY. Pulling it at the
- *   first absence would make every transient failure visible to visitors.
+ * It does not look at completeness. The caller must not invoke it at all for a
+ * `partial` or `failed` harvest — `decideAbsent` returns HELD first, and the
+ * merge never reaches this function. Asserting completeness here as well would
+ * put the asymmetry in two places, and two copies of one rule is how they
+ * diverge: someone fixes a bug in one and the other keeps the old behaviour for
+ * a year.
+ *
+ * ## An unconfirmed record is still published, deliberately
+ *
+ * Below the threshold the state becomes `unconfirmed`, not hidden. Pulling a
+ * review at its first absence would make every transient failure visible to
+ * visitors — a stalled scroll would blank a section of a client's website and
+ * restore it six hours later. The confirmation window is what converts a flaky
+ * observation into a decision, and at the default of three confirmations on a
+ * six-hour cadence that is roughly eighteen hours of consistent absence before
+ * anything stops being published. That latency is the feature.
  *
  * @param {any} prior The `LedgerReview` that was not observed.
  * @param {RemovalPolicy} policy
@@ -77,11 +95,28 @@ export const NOT_IMPLEMENTED_OUTCOME = Object.freeze({
  * @returns {RemovalOutcome}
  */
 export function evaluateRemoval(prior, policy, now) {
-  void prior;
-  void policy;
-  void now;
+  // Terminal is terminal. A tombstoned record is not re-tombstoned, and its
+  // streak stops moving — otherwise `missing_streak` would climb forever and
+  // `tombstoned_at` would drift away from the harvest that actually decided it.
+  if (isTerminalState(prior.state)) return unchangedOutcome(prior);
 
-  return NOT_IMPLEMENTED_OUTCOME;
+  const nextStreak = prior.missing_streak + 1;
+
+  if (nextStreak >= policy.removalConfirmations) {
+    return Object.freeze({
+      tombstone: true,
+      nextStreak,
+      nextState: 'tombstoned',
+      tombstonedAt: now,
+    });
+  }
+
+  return Object.freeze({
+    tombstone: false,
+    nextStreak,
+    nextState: 'unconfirmed',
+    tombstonedAt: null,
+  });
 }
 
 /**
@@ -97,7 +132,36 @@ export function isTerminalState(state) {
   return state === 'tombstoned' || state === 'suppressed';
 }
 
-/** @returns {boolean} */
-export function isScaffold() {
-  return true;
+/**
+ * Whether a removal policy is usable.
+ *
+ * `keepTombstones: false` is rejected rather than honoured. It would mean
+ * deleting records from the ledger, which destroys the only evidence a review
+ * ever existed and makes PT-03 unenforceable — a deleted identity is not
+ * terminal, it is absent, and absent identities get re-inserted on the next
+ * harvest. The flag exists in the config schema so that a deployment cannot set
+ * it silently; the engine refuses rather than adapts (TRD §8.4.4).
+ *
+ * @param {RemovalPolicy} policy
+ * @returns {string[]} Violations, empty when the policy is usable.
+ */
+export function checkRemovalPolicy(policy) {
+  const violations = [];
+
+  if (!Number.isInteger(policy.removalConfirmations)) {
+    violations.push('removalConfirmations must be an integer');
+  } else if (
+    policy.removalConfirmations < MIN_CONFIRMATIONS ||
+    policy.removalConfirmations > MAX_CONFIRMATIONS
+  ) {
+    violations.push(
+      `removalConfirmations must be between ${MIN_CONFIRMATIONS} and ${MAX_CONFIRMATIONS}`,
+    );
+  }
+
+  if (policy.keepTombstones === false) {
+    violations.push('keepTombstones must be true; the engine never deletes ledger records');
+  }
+
+  return violations;
 }

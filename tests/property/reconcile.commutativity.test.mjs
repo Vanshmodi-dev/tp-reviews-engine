@@ -124,7 +124,7 @@ describe('PT-02 — reconciliation is order-independent', () => {
         ),
         ({ sample, orderings }) => allOrderingsAgree(sample, orderings),
       ),
-      { numRuns: 300 },
+      { numRuns: RUNS },
     );
   });
 

@@ -123,3 +123,19 @@ export {
   supports as supportsCapability,
   unknownCapabilities,
 } from './model/capabilities.mjs';
+
+// --- Reconciliation: the merge, and the decisions it is composed of. ---
+export { decideAbsent, decideObserved, isNoOpOutcome } from './reconcile/decide.mjs';
+
+export {
+  bucketByAuthor,
+  collapseIntraRun,
+  findNearDuplicates,
+  isKnownIdentity,
+} from './reconcile/duplicates.mjs';
+
+export { checkRemovalPolicy, evaluateRemoval, isTerminalState } from './reconcile/removal.mjs';
+
+export { applySuppression, buildDenylist, suppressedAmong } from './reconcile/suppress.mjs';
+
+export { EMPTY_DECISIONS, reconcile } from './reconcile/index.mjs';

@@ -20,6 +20,14 @@
 
 import fc from 'fast-check';
 
+import {
+  createLedger,
+  insertReview,
+  markMissing,
+  suppressReview,
+} from '../../src/core/model/ledger.mjs';
+import { review } from './reconcile-input.mjs';
+
 /** Fixed clock. Every law that mentions `now` fixes it; PT-01 requires it. */
 export const NOW = '2026-03-01T00:00:00.000Z';
 
@@ -273,4 +281,144 @@ const harvestSequence = (ids) =>
  */
 export function instantAt(index) {
   return `2026-03-${String(index + 1).padStart(2, '0')}T00:00:00.000Z`;
+}
+
+// ============================================================================
+// REAL-LEDGER GENERATORS
+//
+// Everything above produces the plain Maps the naive counterexamples in
+// `naive-reconcile.mjs` operate on. Everything below produces genuine `Ledger`
+// values and `NormalizedReview` records, for the laws to drive the real
+// `reconcile` with.
+//
+// Both exist on purpose. The laws assert two things — that the real reconciler
+// SATISFIES each law, and that each law REJECTS the documented wrong
+// implementation — and those two claims need inputs of different shapes.
+// ============================================================================
+
+/** The four stop reasons a navigator can report (never completeness directly). */
+export const anyStopReason = () =>
+  fc.constantFrom('target_reached', 'cap_reached', 'stalled', 'budget_exhausted', 'error');
+
+/** Stop reasons that classify as `full` or `full_capped`, where absence counts. */
+export const qualifyingStopReason = () => fc.constantFrom('target_reached', 'cap_reached');
+
+/** Stop reasons that classify as `partial` or `failed`. */
+export const inconclusiveStopReason = () => fc.constantFrom('stalled', 'budget_exhausted', 'error');
+
+/**
+ * Builds a real `Ledger` holding one record per spec, in the requested state.
+ *
+ * States are reached by driving the real constructors rather than by writing
+ * fields, so a ledger produced here is one the engine could actually have
+ * produced. A generator that hand-assembled a `tombstoned` record could
+ * silently produce a shape the engine never creates, and every law asserted
+ * against it would be asserted against fiction.
+ *
+ * @param {ReadonlyArray<{ label: string | number, state: string }>} specs
+ * @param {string} at
+ * @returns {any}
+ */
+export function seedLedger(specs, at) {
+  let ledger = createLedger({ clientSlug: 'acme-dental', listingKey: 'main', now: at });
+
+  for (const { label, state } of specs) {
+    ledger = insertReview(ledger, review(label), at).ledger;
+    ledger = advanceToState(ledger, review(label).identity_hash, state, at);
+  }
+
+  return ledger;
+}
+
+/**
+ * @param {any} ledger
+ * @param {string} identityHash
+ * @param {string} state
+ * @param {string} at
+ * @returns {any}
+ */
+function advanceToState(ledger, identityHash, state, at) {
+  if (state === 'suppressed') return suppressReview(ledger, identityHash, at).ledger;
+  if (state === 'active') return ledger;
+
+  // `unconfirmed` is one qualifying absence; `tombstoned` is three.
+  const absences = state === 'tombstoned' ? 3 : 1;
+  let next = ledger;
+
+  for (let i = 0; i < absences; i += 1) {
+    next = markMissing(next, identityHash, {
+      completeness: 'full',
+      removalConfirmations: 3,
+      now: at,
+    }).ledger;
+  }
+
+  return next;
+}
+
+/** A record state a prior ledger can be in. */
+const anyRecordState = () => fc.constantFrom('active', 'active', 'unconfirmed', 'tombstoned');
+
+/**
+ * A real prior ledger of 2-8 records with mixed states.
+ *
+ * @param {{ state?: fc.Arbitrary<string> }} [options]
+ * @returns {fc.Arbitrary<any>}
+ */
+export const realPriorLedger = ({ state = anyRecordState() } = {}) =>
+  fc
+    .uniqueArray(fc.integer({ min: 0, max: 400 }), { minLength: 2, maxLength: 8 })
+    .chain((labels) => fc.tuple(...labels.map((label) => state.map((s) => ({ label, state: s })))))
+    .map((specs) => seedLedger(specs, '2026-01-01T00:00:00.000Z'));
+
+/**
+ * A real harvest against a real ledger.
+ *
+ * Guarantees at least one prior record is NOT observed, so the absence path is
+ * never skipped, and mixes in brand-new identities and intra-run duplicates so
+ * the insert and collapse paths are exercised too.
+ *
+ * @param {{ stopReason?: fc.Arbitrary<string> }} [options]
+ * @returns {fc.Arbitrary<any>}
+ */
+export const realLedgerAndHarvest = ({ stopReason = anyStopReason() } = {}) =>
+  realPriorLedger().chain((prior) => {
+    const priorLabels = [...prior.records.keys()];
+
+    return fc
+      .record({
+        prior: fc.constant(prior),
+        observedIds: fc.subarray(priorLabels, { maxLength: Math.max(0, priorLabels.length - 1) }),
+        freshLabels: fc.uniqueArray(fc.integer({ min: 500, max: 900 }), { maxLength: 3 }),
+        duplicateTags: fc.array(fc.constantFrom('x', 'y'), { maxLength: 2 }),
+        stopReason,
+        now: fc.constant(NOW),
+      })
+      .map(buildObserved);
+  });
+
+/**
+ * @param {any} raw
+ * @returns {any}
+ */
+function buildObserved(raw) {
+  const { prior, observedIds, freshLabels, duplicateTags, stopReason, now } = raw;
+
+  const fromLedger = observedIds.map((/** @type {string} */ id) => {
+    const stored = prior.records.get(id).review;
+
+    return { ...stored, content_hash: `${stored.content_hash}-seen` };
+  });
+  const fresh = freshLabels.map((/** @type {number} */ label) => review(label));
+  const base = [...fromLedger, ...fresh];
+
+  const duplicates =
+    base.length === 0
+      ? []
+      : duplicateTags.map((/** @type {string} */ tag, /** @type {number} */ index) => ({
+          ...base[index % base.length],
+          content_hash: `${base[index % base.length].content_hash}-${tag}`,
+        }));
+
+  return { prior, observed: [...base, ...duplicates], stopReason, now };
 }

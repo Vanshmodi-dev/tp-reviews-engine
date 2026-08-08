@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tradyperch.dev/schemas/selector-pack.schema.json",
+  "title": "Selector pack",
+  "description": "A versioned, immutable set of extraction strategies for one source. The schema enforces IR-03's mitigation structurally: every required field declares at least two strategies of DIFFERENT kinds, and none may rely on `css` alone. A single-strategy required field is a single point of failure, and a css-only one is a single point of failure that breaks on the next redesign.",
+  "type": "object",
+  "required": ["meta", "fields"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": { "$ref": "#/$defs/meta" },
+    "fields": {
+      "type": "object",
+      "description": "Extraction strategies per field.",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/field" }
+    },
+    "detectors": {
+      "type": "object",
+      "description": "Structural detectors: challenge pages, empty states, consent dialogs.",
+      "additionalProperties": { "$ref": "#/$defs/detector" }
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": ["source", "version", "min_engine_version", "authored_at"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "version": {
+          "type": "string",
+          "pattern": "^v[0-9]+$",
+          "description": "Packs are immutable once merged; a change is a new version (SEL-01)."
+        },
+        "min_engine_version": {
+          "type": "string",
+          "description": "Refused if the running engine is older (TR-SEL-031). A pack using a capability the engine lacks fails at load rather than mid-harvest."
+        },
+        "authored_at": { "type": "string", "format": "date" },
+        "notes": {
+          "type": "string",
+          "description": "Pack-level context, including any recorded technical debt (TR-SEL-012)."
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "required": ["required", "strategies"],
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "A required field with no surviving strategy quarantines the record rather than publishing a null."
+        },
+        "strategies": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/strategy" },
+          "description": "Ordered by stability, most stable first. A new strategy is inserted at its correct rank, never appended for convenience (TR-SEL-012)."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "required": { "const": true } },
+            "required": ["required"]
+          },
+          "then": {
+            "properties": {
+              "strategies": {
+                "minItems": 2,
+                "description": "TR-SEL-010: at least two strategies for a required field."
+              }
+            }
+          }
+        }
+      ]
+    },
+    "strategy": {
+      "type": "object",
+      "required": ["kind", "selector", "notes"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "role",
+            "aria-label-pattern",
+            "data-attribute",
+            "structural-relative",
+            "text-pattern",
+            "css"
+          ],
+          "description": "In preference order. `role` and `aria-label-pattern` are highest because accessibility semantics are user-facing contracts: changing them breaks screen readers, so vendors change them rarely. `css` is lowest — fastest to write, first to break."
+        },
+        "selector": { "type": "string", "minLength": 1 },
+        "attribute": {
+          "type": "string",
+          "description": "Read this attribute rather than the text content."
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Extract the first capture group from the matched text."
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 10,
+          "description": "REQUIRED (TR-SEL-013). What this targets and why it is ranked here. Six months later nobody remembers why strategy 2 exists, and a pack of undocumented selectors cannot be safely edited by anyone who did not write it."
+        }
+      }
+    },
+    "detector": {
+      "type": "object",
+      "required": ["patterns", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

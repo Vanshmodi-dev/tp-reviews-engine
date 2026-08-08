@@ -1,0 +1,12 @@
+{
+  "$schema": "../schemas/client-config.v1.schema.json",
+  "profile": "standard",
+  "notes": "The default profile. Selector pack pinning lives HERE and nowhere else (TR-SEL-004): not in a client config, not in code. One file names which selectors every client on this profile uses, so widening or rolling back a pack is a one-line change with a visible blast radius.",
+  "selector_packs": {
+    "google": "v1"
+  },
+  "cadence_floor_hours": 6,
+  "nav": {
+    "max_reviews": 1000
+  }
+}

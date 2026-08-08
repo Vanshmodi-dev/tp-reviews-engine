@@ -1,0 +1,12 @@
+{
+  "$schema": "../schemas/client-config.v1.schema.json",
+  "profile": "canary",
+  "notes": "One client, pinned ahead of everyone else. Step 4 of the staged rollout in selectors/README.md: a pack that validated is not evidence, and a pack that has run clean on a canary for a full cadence interval is.",
+  "selector_packs": {
+    "google": "v1"
+  },
+  "cadence_floor_hours": 6,
+  "nav": {
+    "max_reviews": 1000
+  }
+}

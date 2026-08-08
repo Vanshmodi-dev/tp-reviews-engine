@@ -25,7 +25,7 @@
     "test:live": "vitest run --project live --passWithNoTests",
     "test:watch": "vitest --project default",
     "size": "node -e \"console.error('size: not yet implemented. Lands in PH-23; runs scripts/size-report.mjs.')\"",
-    "validate:schemas": "node -e \"console.error('validate:schemas: not yet implemented. Lands in PH-09; runs scripts/validate-all.mjs.')\"",
+    "validate:schemas": "node scripts/validate-all.mjs",
     "fixtures:serve": "node -e \"console.error('fixtures:serve: not yet implemented. Lands in PH-15; runs fixtures/server/serve.mjs.')\"",
     "parse:fixture": "node -e \"console.error('parse:fixture: not yet implemented. Lands in PH-13.')\"",
     "hooks:install": "git config core.hooksPath .githooks"

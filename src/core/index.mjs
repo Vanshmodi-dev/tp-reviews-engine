@@ -173,3 +173,6 @@ export {
   evaluateGate,
   forceIsEffective,
 } from './gate/index.mjs';
+
+// --- Completeness: derived from the navigator's stop reason, never counts. ---
+export { COMPLETENESS_VALUES, classifyCompleteness, isComplete } from './validate/completeness.mjs';

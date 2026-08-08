@@ -6,7 +6,9 @@ import { createRedactor } from '../../../src/infra/logger/redact.mjs';
 import { LOG_LEVELS } from '../../../src/ports/logger.mjs';
 import { createFixedClock } from '../../helpers/fixed-clock.mjs';
 
-const SENTINEL = 'ghp_SENTINEL0000000000000000000000000000';
+// Deliberately not shaped like a real credential; see
+// tests/security/redaction.test.mjs for why.
+const SENTINEL = 'SENTINEL-github-token-value-not-a-real-shape';
 
 /**
  * @param {Record<string, any>} [options]

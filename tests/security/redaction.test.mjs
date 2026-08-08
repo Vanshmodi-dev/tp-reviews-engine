@@ -26,12 +26,35 @@ import {
  * field you thought of is how the field you did not think of gets published.
  */
 
+/**
+ * The sentinels are deliberately shaped so they do NOT match the CI secret
+ * scanner's patterns.
+ *
+ * The first draft used realistic prefixes — `ghp_` followed by 36 characters,
+ * `AIza` followed by 35 — and the push-time scanner rejected the branch. That
+ * was the scanner working correctly: it cannot tell a test fixture from a real
+ * credential, and it must not try, because "it is only a fixture" is exactly
+ * what somebody would say about a real leak.
+ *
+ * Nothing is lost. The redactor matches seeded values **literally**, so the
+ * shape of a sentinel is irrelevant to what these tests prove. `assertNoSentinelLooksReal`
+ * below keeps it that way.
+ */
 const SENTINELS = Object.freeze({
-  GITHUB_TOKEN: 'ghp_SENTINEL0000000000000000000000000000',
-  API_KEY: 'AIzaSy-SENTINEL-abcdefghijklmnopqrstuvwxyz',
+  GITHUB_TOKEN: 'SENTINEL-github-token-value-not-a-real-shape',
+  API_KEY: 'SENTINEL-google-api-key-value-not-a-real-shape',
   WEBHOOK_URL: 'https://hooks.example.test/SENTINEL-webhook-path',
   PASSWORD: 'SENTINEL-hunter2-correct-horse',
 });
+
+/** The exact patterns the CI secret scan uses. */
+const SCANNER_PATTERNS = [
+  /ghp_[A-Za-z0-9]{36}/u,
+  /github_pat_[A-Za-z0-9_]{80,}/u,
+  /AIza[0-9A-Za-z_-]{35}/u,
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/u,
+  /xox[baprs]-[0-9A-Za-z-]{10,}/u,
+];
 
 const redactor = () => createRedactor(SENTINELS);
 
@@ -46,6 +69,19 @@ function leaks(output) {
 
   return Object.values(SENTINELS).filter((sentinel) => serialised.includes(sentinel));
 }
+
+describe('the sentinels themselves are safe to commit', () => {
+  it('matches none of the CI secret-scan patterns', () => {
+    // A forcing function. Somebody will eventually want to make these "more
+    // realistic"; this fails locally rather than letting the push-time gate
+    // reject the branch after the fact.
+    for (const [name, value] of Object.entries(SENTINELS)) {
+      for (const pattern of SCANNER_PATTERNS) {
+        expect(pattern.test(value), `${name} looks like a real secret`).toBe(false);
+      }
+    }
+  });
+});
 
 describe('no sentinel survives, at any depth or position', () => {
   it('redacts a secret at the top level', () => {

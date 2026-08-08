@@ -34,6 +34,7 @@
  * @module cli/composition
  */
 
+import { createCsvAdapter } from '../adapters/acquisition/file-csv/index.mjs';
 import { createFilesystemPublisher } from '../adapters/publisher/filesystem.mjs';
 import { createGitState } from '../adapters/state/git-state.mjs';
 import { ERROR_CLASSES } from '../core/index.mjs';
@@ -113,7 +114,27 @@ export function buildDependencies(options = {}) {
     // The taxonomy is injected into the retry mechanism here, because `infra/`
     // is domain-ignorant and may not import `core/`.
     retryPolicy: createRetryPolicy(ERROR_CLASSES),
+    // Adapters are registered STATICALLY (EDR-038, ADP-03). No dynamic import,
+    // no plugin-directory scan: the set of adapters a build contains is visible
+    // in this file and in the dependency graph, which is what makes "which
+    // adapter produced this payload" answerable from the source alone.
+    adapters: adapterRegistry(),
   };
+}
+
+/**
+ * Every acquisition adapter this build contains.
+ *
+ * A plain object, populated at module scope. Dynamic loading would make the
+ * adapter set depend on what happened to be on disk at run time, and an
+ * incident would begin with working out which code actually ran.
+ *
+ * @returns {Record<string, any>}
+ */
+function adapterRegistry() {
+  const csv = createCsvAdapter();
+
+  return { [csv.id]: csv };
 }
 
 /**

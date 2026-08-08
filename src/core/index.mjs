@@ -139,3 +139,37 @@ export { checkRemovalPolicy, evaluateRemoval, isTerminalState } from './reconcil
 export { applySuppression, buildDenylist, suppressedAmong } from './reconcile/suppress.mjs';
 
 export { EMPTY_DECISIONS, reconcile } from './reconcile/index.mjs';
+
+// --- Projection: ledger to the public artifact set, and the Publish Gate. ---
+export {
+  DISPLAY_DEFAULTS,
+  applyDisplayFilters,
+  canonicalise,
+  compareForPublication,
+  computeCoverage,
+  computeStats,
+  hashableBytes,
+  orderForPublication,
+  projectArtifacts,
+  projectLatest,
+  projectPayload,
+  projectReview,
+  projectSchemaOrg,
+  projectStatsArtifact,
+  resolveDisplay,
+  sealArtifact,
+  selectPublishable,
+  serialiseLedger,
+  serialisePayload,
+} from './project/index.mjs';
+
+export {
+  ACCEPT,
+  ACCEPT_WITH_WARNINGS,
+  GATE_DEFAULTS,
+  RULES as GATE_RULE_SET,
+  REJECT,
+  downgradedRules,
+  evaluateGate,
+  forceIsEffective,
+} from './gate/index.mjs';

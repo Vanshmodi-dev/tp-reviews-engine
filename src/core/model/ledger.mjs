@@ -69,6 +69,10 @@ export const OUTCOMES = Object.freeze({
  * @property {string} created_at             RFC 3339.
  * @property {string} updated_at             RFC 3339.
  * @property {string | null} last_full_harvest_at  The honest freshness signal (§52.6).
+ * @property {Record<string, unknown>} [unknown_fields]
+ *   Top-level fields written by a NEWER engine version, carried through
+ *   untouched (TR-STOR-003, LEDG-07). Never serialised under this name; see
+ *   {@link toJSON}.
  */
 
 /**
@@ -519,6 +523,10 @@ export function toJSON(ledger) {
   }
 
   return {
+    // Unknown fields first, so a known field always wins a collision. A newer
+    // engine's `ledger_version` must not be overwritten by an older one's idea
+    // of the same key.
+    ...(ledger.unknown_fields ?? {}),
     ledger_version: ledger.ledger_version,
     identity_algo_version: ledger.identity_algo_version,
     client_slug: ledger.client_slug,
@@ -530,6 +538,18 @@ export function toJSON(ledger) {
   };
 }
 
+/** Top-level keys this engine version understands. */
+const KNOWN_LEDGER_FIELDS = Object.freeze([
+  'ledger_version',
+  'identity_algo_version',
+  'client_slug',
+  'listing_key',
+  'created_at',
+  'updated_at',
+  'last_full_harvest_at',
+  'records',
+]);
+
 /**
  * Rebuilds a ledger from its JSON shape.
  *
@@ -539,7 +559,24 @@ export function toJSON(ledger) {
 export function fromJSON(json) {
   const records = new Map();
   for (const [key, record] of Object.entries(json.records ?? {})) {
+    // Records are stored whole, which is what preserves a newer engine's
+    // per-record fields for free.
     records.set(key, Object.freeze(record));
+  }
+
+  // TR-STOR-003, LEDG-07. A field this version does not recognise is carried
+  // through untouched rather than dropped.
+  //
+  // The failure it prevents is specific and silent: `state` is a git branch, so
+  // rolling the engine back to an earlier version is a normal, expected
+  // operation. If an older engine read a newer ledger, kept only the fields it
+  // knew, and wrote it back, the rollback would permanently delete data the
+  // newer version had written — and nothing would report it, because from the
+  // older engine's point of view the file it wrote is exactly right.
+  /** @type {Record<string, unknown>} */
+  const unknownFields = {};
+  for (const [key, value] of Object.entries(json)) {
+    if (!KNOWN_LEDGER_FIELDS.includes(key)) unknownFields[key] = value;
   }
 
   return Object.freeze({
@@ -551,5 +588,6 @@ export function fromJSON(json) {
     created_at: json.created_at,
     updated_at: json.updated_at,
     last_full_harvest_at: json.last_full_harvest_at ?? null,
+    ...(Object.keys(unknownFields).length === 0 ? {} : { unknown_fields: unknownFields }),
   });
 }

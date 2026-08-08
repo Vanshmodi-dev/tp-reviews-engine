@@ -49,13 +49,33 @@ function reviewsOf(count) {
 
 /**
  * @param {() => void} work
- * @returns {number} Milliseconds elapsed.
+ * @returns {number} Milliseconds of wall clock elapsed.
  */
 function timed(work) {
   const started = performance.now();
   work();
 
   return performance.now() - started;
+}
+
+/**
+ * CPU milliseconds consumed by `work`, rather than wall-clock elapsed.
+ *
+ * The scaling assertion compares two measurements against each other, so it is
+ * ruined by anything that deschedules one of them — a parallel test worker, a
+ * GC pause, CI sharing a runner. `process.cpuUsage` measures time this process
+ * actually spent on a CPU, which is what "is this quadratic" is really asking
+ * and which does not move when the machine is busy.
+ *
+ * @param {() => void} work
+ * @returns {number}
+ */
+function cpuTimed(work) {
+  const started = process.cpuUsage();
+  work();
+  const { user, system } = process.cpuUsage(started);
+
+  return (user + system) / 1000;
 }
 
 describe('reconcile stays within its CPU budget', () => {
@@ -100,10 +120,10 @@ describe('reconcile stays within its CPU budget', () => {
     const smallPrior = ledgerWith(small, T0);
     const largePrior = ledgerWith(large, T0);
 
-    const smallMs = timed(() =>
+    const smallMs = cpuTimed(() =>
       reconcile(harvest({ prior: smallPrior, observed: small, now: T1 })),
     );
-    const largeMs = timed(() =>
+    const largeMs = cpuTimed(() =>
       reconcile(harvest({ prior: largePrior, observed: large, now: T1 })),
     );
 

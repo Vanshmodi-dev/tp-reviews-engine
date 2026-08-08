@@ -32,7 +32,17 @@ export default defineConfig({
           environment: 'node',
           // 61.3.2: no shared mutable state between tests, and no global setup.
           globals: false,
-          testTimeout: 10_000,
+          // Fifteen property laws run 1,000 generated cases each, and CI runs
+          // them under v8 coverage instrumentation on a shared runner. A single
+          // law legitimately takes several seconds there; the 10 s this started
+          // at was set when the suite was a tenth of its current size, and
+          // tightening it further would fail runs for being on a busy machine
+          // rather than for being wrong.
+          //
+          // This is not cover for a slow test. Anything genuinely quadratic is
+          // caught by tests/budgets/, which asserts complexity class rather than
+          // wall-clock and would fail long before this timeout mattered.
+          testTimeout: 30_000,
         },
       },
       {

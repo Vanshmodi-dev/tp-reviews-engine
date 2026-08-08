@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tradyperch.dev/schemas/payload.v1.schema.json",
+  "title": "TP Reviews Engine public payload, schema version 1",
+  "description": "The public contract, authoritative at runtime (EDR-039). additionalProperties is false throughout: a field that reaches a payload without being named here is rejected rather than published, which is what stops an internal field from leaking by accident.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact",
+    "generated_at",
+    "client",
+    "listing",
+    "provenance",
+    "stats"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "artifact": {
+      "type": "string",
+      "enum": ["reviews", "latest", "stats", "schema_org", "index"]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Excluded from every content hash (EDR-022)."
+    },
+    "client": {
+      "type": "object",
+      "required": ["slug", "display_name"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "type": "string", "minLength": 1 },
+        "display_name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "listing": { "$ref": "#/$defs/listing" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "stats": { "$ref": "#/$defs/stats" },
+    "reviews": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/review" },
+      "description": "Absent in the stats artifact. May be empty."
+    },
+    "pagination": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pagination" }]
+    },
+    "notices": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "harvest_partial",
+              "harvest_capped",
+              "source_unavailable",
+              "awaiting_first_full_harvest"
+            ]
+          }
+        }
+      ]
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Index artifact only: content hash per artifact.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["content_hash"],
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "schema_org": {
+      "type": "object",
+      "description": "schema.org artifact only. Opt-in; see TR-PROJ-040."
+    }
+  },
+  "$defs": {
+    "listing": {
+      "type": "object",
+      "required": ["key", "display_name"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string", "minLength": 1 },
+        "source": { "type": ["string", "null"] },
+        "source_id": { "type": ["string", "null"] },
+        "source_url": { "type": ["string", "null"] },
+        "display_name": { "type": "string", "minLength": 1 },
+        "locale": { "type": ["string", "null"] },
+        "advertised_total": { "type": ["integer", "null"], "minimum": 0 },
+        "advertised_rating": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 5
+        },
+        "address_hint": {
+          "type": ["string", "null"],
+          "description": "Coarse label only. Never a precise address."
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "description": "INV-06 is satisfied entirely by this block.",
+      "required": [
+        "engine_version",
+        "schema_version",
+        "adapter",
+        "adapter_capabilities",
+        "identity_algo_version",
+        "run_id",
+        "harvest_started_at",
+        "harvest_completeness",
+        "content_hash"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "engine_version": { "type": "string", "minLength": 1 },
+        "schema_version": { "type": "integer", "const": 1 },
+        "adapter": { "type": "string", "minLength": 1 },
+        "adapter_capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What this adapter could supply. Explains any null."
+        },
+        "selector_pack_version": { "type": ["string", "null"] },
+        "identity_algo_version": { "type": "integer", "minimum": 1 },
+        "run_id": { "type": "string", "minLength": 1 },
+        "harvest_started_at": { "type": "string", "format": "date-time" },
+        "harvest_completeness": {
+          "type": "string",
+          "enum": ["full", "full_capped", "partial", "failed"]
+        },
+        "content_hash": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          ],
+          "description": "Over canonical bytes excluding generated_at. Null only during construction."
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "required": [
+        "total_count",
+        "advertised_total",
+        "coverage",
+        "mean_rating",
+        "advertised_rating",
+        "distribution",
+        "with_text_count",
+        "with_reply_count",
+        "newest_review_date",
+        "oldest_review_date",
+        "languages",
+        "completeness",
+        "last_full_harvest_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "total_count": { "type": "integer", "minimum": 0 },
+        "advertised_total": { "type": ["integer", "null"], "minimum": 0 },
+        "coverage": { "type": ["number", "null"], "minimum": 0 },
+        "mean_rating": { "type": "number", "minimum": 0, "maximum": 5 },
+        "advertised_rating": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 5
+        },
+        "distribution": {
+          "type": "object",
+          "required": ["1", "2", "3", "4", "5"],
+          "additionalProperties": false,
+          "properties": {
+            "1": { "type": "integer", "minimum": 0 },
+            "2": { "type": "integer", "minimum": 0 },
+            "3": { "type": "integer", "minimum": 0 },
+            "4": { "type": "integer", "minimum": 0 },
+            "5": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "with_text_count": { "type": "integer", "minimum": 0 },
+        "with_reply_count": { "type": "integer", "minimum": 0 },
+        "newest_review_date": { "type": ["string", "null"] },
+        "oldest_review_date": { "type": ["string", "null"] },
+        "languages": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "completeness": {
+          "type": "string",
+          "enum": ["full", "full_capped", "partial", "failed"]
+        },
+        "last_full_harvest_at": {
+          "type": ["string", "null"],
+          "description": "The honest freshness signal."
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "description": "The public projection of one review. Internal ledger fields are absent by construction and rejected here by additionalProperties: false.",
+      "required": ["id", "rating", "date", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+        "author_name": { "type": ["string", "null"] },
+        "author_initials": { "type": ["string", "null"] },
+        "author_avatar_url": { "type": ["string", "null"] },
+        "author_profile_url": { "type": ["string", "null"] },
+        "author_is_local_guide": { "type": ["boolean", "null"] },
+        "rating": { "type": ["integer", "null"], "minimum": 1, "maximum": 5 },
+        "text": { "type": ["string", "null"] },
+        "text_truncated": { "type": "boolean" },
+        "date": { "type": ["string", "null"] },
+        "date_precision": {
+          "type": ["string", "null"],
+          "enum": ["day", "week", "month", "quarter", "year", null]
+        },
+        "date_confidence": {
+          "type": ["string", "null"],
+          "enum": ["high", "medium", "low", null]
+        },
+        "language": { "type": ["string", "null"] },
+        "likes": { "type": ["integer", "null"], "minimum": 0 },
+        "photo_count": { "type": ["integer", "null"], "minimum": 0 },
+        "owner_reply": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["text", "date"],
+              "additionalProperties": false,
+              "properties": {
+                "text": { "type": ["string", "null"] },
+                "date": { "type": ["string", "null"] }
+              }
+            }
+          ]
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "source_url": { "type": ["string", "null"] },
+        "verified": { "type": ["boolean", "null"] },
+        "first_seen_at": { "type": "string", "format": "date-time" },
+        "revision": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "required": ["page", "page_count", "page_size", "next"],
+      "additionalProperties": false,
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "page_count": { "type": "integer", "minimum": 1 },
+        "page_size": { "type": "integer", "minimum": 1 },
+        "next": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

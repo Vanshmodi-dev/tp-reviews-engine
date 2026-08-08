@@ -9,7 +9,7 @@
  * @module tests/helpers/reconcile-input
  */
 
-import { createLedger, insertReview } from '../../src/core/model/ledger.mjs';
+import { applyBatch, createLedger, nextInsert } from '../../src/core/model/ledger.mjs';
 import { buildNormalizedReview } from './build-review.mjs';
 
 /** The instant a seeded ledger's prior harvest ran. */
@@ -51,13 +51,19 @@ export function review(label, overrides = {}) {
  * @returns {any}
  */
 export function ledgerWith(reviews, now = T0) {
-  let ledger = createLedger({ clientSlug: 'acme-dental', listingKey: 'main', now });
+  const ledger = createLedger({ clientSlug: 'acme-dental', listingKey: 'main', now });
 
-  for (const record of reviews) {
-    ledger = insertReview(ledger, record, now).ledger;
-  }
+  // Batched, not one `insertReview` per review. Each single-record write copies
+  // the whole record Map, so seeding n reviews that way is O(n²) — building the
+  // 5,000-record fixture the budget suite uses cost 12.5 million entry copies
+  // and made the SETUP the slowest thing in the run. The records are identical
+  // either way; `nextInsert` is what `insertReview` computes with.
+  const changes = reviews.map((record) => [
+    record.identity_hash,
+    nextInsert(undefined, record, now),
+  ]);
 
-  return ledger;
+  return applyBatch(ledger, /** @type {any} */ (changes), now);
 }
 
 /**

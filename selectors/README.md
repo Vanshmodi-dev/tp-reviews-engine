@@ -1,32 +1,87 @@
-# `selectors/` — versioned packs of volatile knowledge
+# Selector packs
 
-**The rule: a merged pack is never edited. A change creates `v<n+1>.json`.**
+A pack is a versioned, **immutable** set of extraction strategies for one
+source. `selectors/google-maps/v1.json` is a pack; editing it after it has been
+merged is a CI failure (SEL-01).
 
-This directory isolates the single most volatile knowledge in the system — how
-to find a rating, an author, or a review body in someone else's markup — into
-versioned data files that carry no code. When the markup changes, the fix is a
-new JSON file and a one-line profile edit, not an engine release.
+## Why immutable
 
-**Why old packs are kept forever.** Fixtures captured under pack `v2` continue
-to be tested against `v2`. That is what proves the golden corpus tests
-_extraction_ rather than today's markup. Delete `v2` and the corpus silently
-starts asserting that the parser matches whatever the site looks like now, which
-is the opposite of a regression test.
+A pack version appears in every payload's provenance block. "Which selectors
+produced this payload" has to be answerable from the payload alone, months
+later, during an incident — and it stops being answerable the moment `v1.json`
+can mean two different things depending on when you looked.
 
-Three further rules:
+Editing a merged pack also silently changes the behaviour of every client
+pinned to it, with no version bump to review and nothing in a diff of the
+profiles to notice. A new version is one file and one pin change; that is the
+whole cost of keeping the question answerable.
 
-- **Every pack validates against `schema/selector-pack.schema.json` at load
-  time.** A malformed pack fails immediately with `ERR-PARSE-SELECTOR-PACK`,
-  never as a mysterious extraction failure three stages later.
-- **Version pinning lives in a profile**, never in a client config and never in
-  code. That is what makes a staged rollout possible: point `conservative` at
-  the new pack, observe one cycle, then move `default`. A staged rollout of the
-  highest-risk change in the system, achieved with a one-line edit in two files.
-- **`assertions.json` is structural, not content-based.** The canary asserts
-  that the page still has the shape the pack expects, so a break is detected on
-  a reference listing before it reaches a paying client.
+## Authoring a pack
 
-Each pack records the date it was authored and the fixture cases it was
-validated against.
+**Every required field needs at least two strategies of different kinds**
+(TR-SEL-010), ordered most stable first, and none may rely on `css` alone
+(TR-SEL-011). The loader enforces all of this and refuses the pack otherwise.
 
-Specified by TRD §6.5. TR-SEL-001 through TR-SEL-004.
+The kinds, in preference order:
+
+| Kind                  | Why it ranks here                                                                                                                                     |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `role`                | Accessibility semantics are a user-facing contract. A vendor that changes them breaks screen readers, which is a louder failure for them than for us. |
+| `aria-label-pattern`  | Same reasoning, and it often carries the _value_ directly — far more robust than parsing visual stars.                                                |
+| `data-attribute`      | Used by the vendor's own tooling, so moderately stable. But it is theirs to rename without notice.                                                    |
+| `structural-relative` | Survives class renames; breaks on layout restructuring.                                                                                               |
+| `text-pattern`        | Locale-dependent but structure-independent.                                                                                                           |
+| `css`                 | Fastest to write, first to break. Last resort only.                                                                                                   |
+
+**Every strategy needs `notes`** (TR-SEL-013) explaining what it targets and why
+it is ranked where it is. Six months later nobody remembers why strategy 2
+exists, and an undocumented pack cannot be safely edited by anyone who did not
+write it — which, on a six-month-old pack, is everybody.
+
+**Insert a new strategy at its correct rank** (TR-SEL-012), never append it. A
+pack that tries `css` first records a healthy-looking strategy-0 hit rate while
+actually depending on the least reliable option it has.
+
+## The six-step staged rollout
+
+A pack change is a change to how every pinned client reads its source, so it is
+staged rather than shipped.
+
+1. **Author** the new version as a new file (`v2.json`). Never edit `v1.json`.
+2. **Validate** it: `tpre validate-selectors` runs the loader's rules, which
+   fail the pack rather than the harvest.
+3. **Replay** it against the fixture corpus. The corpus is what makes a pack
+   change reviewable without touching a live source.
+4. **Pin one canary client** to the new version in `profiles/`, and only one.
+   Pinning lives in a profile, never in a client config or in code
+   (TR-SEL-004), so the blast radius of a pin change is visible in one file.
+5. **Watch the strategy histogram** for a full cadence interval. A field
+   resolving at index 1 where it used to resolve at index 0 means the new pack
+   is working on its fallback — which is a reason to re-author, not to roll out.
+6. **Widen the pin** profile by profile. A pack that has run clean on a canary
+   for a cycle is evidence; a pack that validated is not.
+
+Rolling back is a one-line pin change, which is the point of steps 4 and 6.
+
+## What the strategy histogram tells you
+
+The resolver records **which strategy index won** for every field, and that
+number is the most valuable diagnostic extraction produces.
+
+A field that has always resolved at index 0 and starts resolving at index 1 is
+telling you the source changed and the pack is now running on its fallback.
+Nothing has failed. The payload is correct. But the margin is gone, and the next
+change takes the field out entirely.
+
+Without the histogram, that transition is invisible until the day it breaks —
+and on that day it presents as a rising quarantine rate and a blocked publish,
+three layers away from its cause.
+
+## When every strategy fails
+
+The record is **quarantined**, never published with a null (T-191). A null
+rating would produce a schema-valid payload that puts a review on a client's
+site with no rating, and nothing downstream would object.
+
+Quarantined records feed the rate that gate rule G-06 watches, which is how a
+broken pack becomes a blocked publish rather than a degraded one.

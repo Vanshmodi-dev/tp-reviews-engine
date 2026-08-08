@@ -1,0 +1,135 @@
+{
+  "meta": {
+    "source": "google",
+    "version": "v1",
+    "min_engine_version": "1.0.0",
+    "authored_at": "2026-03-01",
+    "notes": "Initial pack. Every required field carries at least two strategies of different kinds (TR-SEL-010), ordered most-stable-first. Selectors here are structural patterns rather than a transcription of any particular rendering; they are validated against the fixture corpus in PH-13, and staged per the six-step rollout in selectors/README.md before any client uses them."
+  },
+  "fields": {
+    "review_container": {
+      "required": true,
+      "strategies": [
+        {
+          "kind": "role",
+          "selector": "[role='article']",
+          "notes": "Each review is exposed as an article to assistive technology. This is a user-facing accessibility contract, so it changes rarely and never quietly — a vendor that broke it would break screen readers first, which is a louder failure for them than for us."
+        },
+        {
+          "kind": "data-attribute",
+          "selector": "[data-review-id]",
+          "attribute": "data-review-id",
+          "notes": "The vendor's own review identifier, used by their client-side code. Stable while their tooling depends on it, which is why it ranks above anything structural, but it is theirs to rename without notice."
+        }
+      ]
+    },
+    "author_name": {
+      "required": true,
+      "strategies": [
+        {
+          "kind": "aria-label-pattern",
+          "selector": "[aria-label]",
+          "pattern": "^(?:Review|Photo) by (.+)$",
+          "notes": "The accessible label carries the author name as a value rather than as rendered text, so it survives a visual redesign that changes how the name is displayed. Ranked first because it gives the value directly."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "[role='article'] > :first-child a[href*='/contrib/']",
+          "notes": "The contributor link inside a review container. Survives class renames because it keys on the href shape, and breaks only if the container layout is restructured — which is a bigger change than a restyle."
+        },
+        {
+          "kind": "css",
+          "selector": ".review-author-name",
+          "notes": "Last resort. Fastest to write and first to break; present so a redesign that takes out both strategies above degrades to a working fallback rather than to a quarantined record. Its use should show up in the strategy histogram as a signal to re-author the pack."
+        }
+      ]
+    },
+    "rating": {
+      "required": true,
+      "strategies": [
+        {
+          "kind": "aria-label-pattern",
+          "selector": "[role='img'][aria-label]",
+          "pattern": "([0-9](?:\\.[0-9])?)\\s*(?:star|out of)",
+          "notes": "The star widget's accessible label states the numeric rating. Vastly more robust than counting filled star glyphs, which changes with every icon-set revision and is locale-independent here because the number is in the label regardless of the surrounding words."
+        },
+        {
+          "kind": "data-attribute",
+          "selector": "[data-rating]",
+          "attribute": "data-rating",
+          "notes": "The vendor's own rating attribute. Ranked below the aria label because it is internal tooling rather than a user-facing contract, so it carries no external pressure against renaming."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "[role='article'] [role='img'][aria-label*='star']",
+          "notes": "Scoped fallback for renderings where the star widget is not the first labelled image. Structure-dependent, so it survives restyling but not a layout rewrite."
+        }
+      ]
+    },
+    "text": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-review-text]",
+          "notes": "The review body. Optional because a rating-only review is legitimate and common; a null here is real data rather than an extraction failure."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "[role='article'] [lang]",
+          "notes": "The body is the element carrying a language attribute, which the vendor sets so translation can be offered. Doubles as a language hint when the detector is uncertain."
+        }
+      ]
+    },
+    "relative_date": {
+      "required": true,
+      "strategies": [
+        {
+          "kind": "aria-label-pattern",
+          "selector": "[aria-label*='ago']",
+          "pattern": "^(.+ ago)$",
+          "notes": "Sources publish relative dates, not absolute ones. This reads the accessible label, which states it in full where the visible text is sometimes abbreviated to '2mo'."
+        },
+        {
+          "kind": "text-pattern",
+          "selector": "[role='article']",
+          "pattern": "([0-9]+\\s+(?:minute|hour|day|week|month|year)s?\\s+ago)",
+          "notes": "Locale-dependent by nature — this is the English form and the pack is per-locale — but structure-independent, so it survives any amount of markup churn. Ranked below the aria label precisely because of that locale dependence."
+        }
+      ]
+    },
+    "owner_reply_text": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-owner-reply]",
+          "notes": "The business's reply. Optional: most reviews have none, so absence is ordinary rather than a failure."
+        },
+        {
+          "kind": "text-pattern",
+          "selector": "[role='article']",
+          "pattern": "Response from the owner\\s*(?:\\([^)]*\\))?\\s*(.+)",
+          "notes": "The reply is introduced by a fixed phrase. Locale-dependent, and ranked last because a false match would attribute the owner's words to the reviewer — which is worse than reporting no reply at all."
+        }
+      ]
+    }
+  },
+  "detectors": {
+    "challenge": {
+      "patterns": ["unusual traffic", "verify you are human", "/sorry/index"],
+      "confidence": "high",
+      "notes": "A challenge is TERMINAL and never retried (INV-07). Detected structurally rather than by status code, because the challenge is served as a 200."
+    },
+    "empty_state": {
+      "patterns": ["No reviews yet", "Be the first to review"],
+      "confidence": "high",
+      "notes": "Distinguishes a listing with genuinely no reviews from a page that failed to render them. Without it, both look like zero reviews — and one of those is a reason to publish nothing while the other is a reason to raise ERR-PARSE-EMPTY-UNEXPECTED (CH-06)."
+    },
+    "consent": {
+      "patterns": ["Before you continue", "Accept all", "Reject all"],
+      "confidence": "medium",
+      "notes": "The consent interstitial hides the review list entirely. Medium confidence because the phrases are generic enough to appear in ordinary page content."
+    }
+  }
+}

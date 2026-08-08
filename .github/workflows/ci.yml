@@ -90,6 +90,34 @@ jobs:
       - name: Schemas
         run: npm run validate:schemas
 
+      # --- selector-pack immutability (SEL-01) -----------------------------
+      # A merged pack is immutable. Its version appears in every payload's
+      # provenance block, so "which selectors produced this payload" has to be
+      # answerable from the payload alone months later - and it stops being
+      # answerable the moment v1.json can mean two different things depending
+      # on when you looked.
+      #
+      # Editing a merged pack also silently changes the behaviour of every
+      # client pinned to it, with no version bump to review. A new version is
+      # one file and one pin change.
+      #
+      # Only pull_request events have a base to diff against; a push to main is
+      # the merge of a PR that already passed this.
+      - name: Selector pack immutability
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          base="origin/${{ github.base_ref }}"
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          changed=$(git diff --name-only --diff-filter=M "$base"...HEAD -- 'selectors/*/v*.json' || true)
+          if [ -n "$changed" ]; then
+            echo "::error::A merged selector pack was modified. Packs are immutable (SEL-01):"
+            echo "$changed"
+            echo "Add a new version instead, and move the pin in profiles/."
+            exit 1
+          fi
+          echo "No merged selector pack was modified."
+
       # --- 11. workflow lint ----------------------------------------------
       # TR-CI-001, TR-CI-002, TR-CI-003 asserted mechanically. The full test
       # arrives as tests/security/workflow-lint.test.mjs; this inline check

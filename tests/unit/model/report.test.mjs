@@ -81,7 +81,10 @@ describe('the twelve gate rules (§26.3)', () => {
   });
 
   it('keeps the schema, emptiness, partial-drop and fatal rules non-overridable', () => {
-    expect(NON_OVERRIDABLE_RULES).toEqual(['G-01', 'G-02', 'G-05', 'G-06', 'G-07']);
+    // SAD §26.8 and TRD §26.8 both say force downgrades G-03, G-04, G-05 and
+    // G-12, and that G-01, G-02, G-06 and G-07 are never overridable. G-05 was
+    // listed here in error; the correction is deliberate and cited.
+    expect(NON_OVERRIDABLE_RULES).toEqual(['G-01', 'G-02', 'G-06', 'G-07']);
   });
 
   it('marks only coverage and size as warn-only', () => {

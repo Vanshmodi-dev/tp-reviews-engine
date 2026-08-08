@@ -67,7 +67,20 @@ export const GATE_RULES = Object.freeze([
   {
     id: 'G-05',
     statement: 'If completeness is partial, count must not have dropped at all',
-    overridable: false,
+    // Overridable, per SAD §26.8 and TRD §26.3/§26.8, which agree: force
+    // downgrades G-03, G-04, G-05 and G-12; G-01, G-02, G-06 and G-07 are never
+    // overridable. This module first declared G-05 non-overridable, which was
+    // wrong.
+    //
+    // It reads like a safety regression and is not. G-05 is the rule CH-04
+    // exercises, and on any *scheduled* run it still rejects — force flags are
+    // ignored entirely outside manual dispatch (TR-GATE-031), require a written
+    // reason (TR-GATE-030), and the runbook requires verifying the real source
+    // count first. The escape hatch exists because "the client deleted a
+    // duplicate listing during a partial harvest" is a real situation, and the
+    // rules that are never overridable are the ones that indicate a defect
+    // rather than a disagreement about a threshold.
+    overridable: true,
   },
   { id: 'G-06', statement: 'Quarantine rate within quarantine_max', overridable: false },
   { id: 'G-07', statement: 'No record-level fatal findings remain', overridable: false },

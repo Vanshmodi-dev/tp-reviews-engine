@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tradyperch.dev/schemas/ledger.v1.schema.json",
+  "title": "TP Reviews Engine ledger, schema version 1",
+  "description": "Internal state, stored on the `state` branch. Unlike the payload schema this deliberately permits unknown fields at the record level: an older engine reading a newer ledger must preserve what it does not understand rather than strip it (TR-STOR-003). Stripping would make a rollback silently delete a newer engine's data.",
+  "type": "object",
+  "required": [
+    "ledger_version",
+    "identity_algo_version",
+    "client_slug",
+    "listing_key",
+    "records",
+    "created_at",
+    "updated_at",
+    "last_full_harvest_at"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "ledger_version": { "type": "integer", "const": 1 },
+    "identity_algo_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bumping this is a migration, not an edit."
+    },
+    "client_slug": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Immutable after first publication."
+    },
+    "listing_key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Immutable after first publication."
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_full_harvest_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "records": {
+      "type": "object",
+      "description": "Keyed by identity_hash. An object rather than an array: lookup is O(1) and the key is visible in a diff.",
+      "propertyNames": { "pattern": "^[0-9a-f]{32}$" },
+      "additionalProperties": { "$ref": "#/$defs/ledgerReview" }
+    }
+  },
+  "$defs": {
+    "ledgerReview": {
+      "type": "object",
+      "required": [
+        "review",
+        "state",
+        "first_seen_at",
+        "last_seen_at",
+        "last_updated_at",
+        "revision",
+        "missing_streak",
+        "tombstoned_at",
+        "content_hash_history"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "review": { "type": "object", "additionalProperties": true },
+        "state": {
+          "type": "string",
+          "enum": ["active", "unconfirmed", "tombstoned", "suppressed"],
+          "description": "tombstoned and suppressed are terminal and never revert."
+        },
+        "first_seen_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Written once at INSERT and never again (PT-05)."
+        },
+        "last_seen_at": { "type": "string", "format": "date-time" },
+        "last_updated_at": { "type": "string", "format": "date-time" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "missing_streak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Increments only on a full or full_capped harvest (TR-REC-010)."
+        },
+        "tombstoned_at": { "type": ["string", "null"], "format": "date-time" },
+        "content_hash_history": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

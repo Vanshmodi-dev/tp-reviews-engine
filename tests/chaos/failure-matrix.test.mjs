@@ -1,11 +1,31 @@
-import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
+import { ACCEPT, REJECT, evaluateGate } from '../../src/core/gate/index.mjs';
 import { OUTCOMES } from '../../src/core/model/ledger.mjs';
 import { reconcile } from '../../src/core/reconcile/index.mjs';
 import { classifyCompleteness } from '../../src/core/validate/completeness.mjs';
+import { candidate as gateCandidate } from '../helpers/gate-input.mjs';
 import { naiveUniformAbsence } from '../helpers/naive-reconcile.mjs';
 import { harvest, identity, ledgerWith, review, T0, T1 } from '../helpers/reconcile-input.mjs';
+
+/** The healthy payload already published: 118 reviews from a complete harvest. */
+const priorPayload = () => payloadWith({ total_count: ADVERTISED_TOTAL, completeness: 'full' });
+
+/**
+ * A payload with the given count and completeness, and nothing else
+ * interesting, so a gate verdict is attributable to those two facts alone.
+ *
+ * @param {{ total_count: number, completeness: string }} overrides
+ * @returns {any}
+ */
+function payloadWith({ total_count, completeness }) {
+  return gateCandidate({
+    total_count,
+    completeness,
+    advertised_total: ADVERTISED_TOTAL,
+    coverage: total_count / ADVERTISED_TOTAL,
+  });
+}
 
 /**
  * The chaos matrix — CH-01…CH-14 (PH-21, §62).
@@ -50,13 +70,19 @@ import { harvest, identity, ledgerWith, review, T0, T1 } from '../helpers/reconc
  * catch this particular case — and the first two are what protect the cases the
  * gate does not catch."*
  *
- * **Protection 3 cannot be asserted yet.** `src/core/gate/` is empty until
- * PH-06, and the honest options were to leave the assertion out or to invent a
- * gate to assert against. Inventing one would produce a green test that proves
- * nothing about the rule it names — the precise failure §62 warns about, where
- * *"CH-04 implemented as a count check rather than a completeness check would
- * pass while the protection it tests is absent"*. So protection 3 is an explicit
- * `todo`, and a guard below fails the moment `core/gate/index.mjs` appears.
+ * **Protection 3 was written when PH-06 landed `core/gate/`.** Until then it was
+ * an explicit `todo` guarded by a test that asserted `core/gate/index.mjs` did
+ * not exist — so the moment the gate appeared, the suite failed and demanded
+ * this section. That was deliberate: the alternative was inventing a gate to
+ * assert against, which produces a green test proving nothing about the rule it
+ * names, and is the precise failure §62 warns about, where *"CH-04 implemented
+ * as a count check rather than a completeness check would pass while the
+ * protection it tests is absent"*.
+ *
+ * Protection 3 asserts G-05 **by name**, with its error class, and asserts it
+ * does not fire on the same count drop from a *complete* harvest. A test
+ * asserting only "the gate rejected" would pass if G-03 fired and G-05 had been
+ * deleted.
  *
  * ## The verification requirement is mechanised
  *
@@ -187,16 +213,79 @@ describe('CH-04 — pagination stalls at 12 of 118 (INV-03)', () => {
   });
 
   describe('protection 3 · gate rejection', () => {
-    it.todo('rejects on the coverage rule G-05 — needs core/gate/ (PH-06, T-295)');
+    // Written when PH-06 landed `core/gate/`, because the guard that used to
+    // stand here failed the moment it did. That is the forcing function doing
+    // its job: the gap closed when it could, rather than when somebody
+    // remembered.
+    it('rejects the stalled harvest, naming the coverage rule', () => {
+      const verdict = evaluateGate({
+        candidate: payloadWith({
+          total_count: OBSERVED_BEFORE_STALL + NEW_REVIEWS,
+          completeness: 'partial',
+        }),
+        prior: priorPayload(),
+      });
 
-    it('fails once the gate exists, so protection 3 cannot stay unwritten', () => {
-      // A forcing function rather than a note somebody has to find. When PH-06
-      // lands `core/gate/index.mjs`, this test fails and the todo above must be
-      // written for the suite to go green again.
-      expect(
-        existsSync(new URL('../../src/core/gate/index.mjs', import.meta.url)),
-        'core/gate/ now exists: write CH-04 protection 3 (T-295) and delete this test',
-      ).toBe(false);
+      expect(verdict.decision).toBe(REJECT);
+      expect(ruleIdsOf(verdict)).toContain('G-05');
+    });
+
+    it('names G-05 specifically, not merely some rule', () => {
+      // A test asserting only "it rejected" would pass if G-03 fired and G-05
+      // had been deleted, which is the protection silently disappearing.
+      const verdict = evaluateGate({
+        candidate: payloadWith({
+          total_count: OBSERVED_BEFORE_STALL + NEW_REVIEWS,
+          completeness: 'partial',
+        }),
+        prior: priorPayload(),
+      });
+      const g05 = reasonFor(verdict, 'G-05');
+
+      expect(g05.verdict).toBe(REJECT);
+      expect(g05.errorClass).toBe('ERR-GATE-REJECT-COVERAGE');
+      expect(g05.detail).toContain('partial');
+    });
+
+    it('rejects even a single missing review on a partial harvest', () => {
+      // G-05 is stricter than G-03 deliberately: 117 of 118 is a 0.8% drop,
+      // nowhere near G-03's 20% threshold, and still untrustworthy because a
+      // partial harvest's absences carry no information.
+      const verdict = evaluateGate({
+        candidate: payloadWith({ total_count: ADVERTISED_TOTAL - 1, completeness: 'partial' }),
+        prior: priorPayload(),
+      });
+
+      expect(verdict.decision).toBe(REJECT);
+      expect(ruleIdsOf(verdict)).toEqual(['G-05']);
+    });
+
+    it('does not reject the same drop when the harvest was complete', () => {
+      // The other half: G-05 must not fire spuriously. A full harvest losing
+      // one review is a real removal, and blocking it would freeze the payload.
+      const verdict = evaluateGate({
+        candidate: payloadWith({ total_count: ADVERTISED_TOTAL - 1, completeness: 'full' }),
+        prior: priorPayload(),
+      });
+
+      expect(verdict.decision).toBe(ACCEPT);
+    });
+  });
+
+  describe('the three protections are independent (§62.2)', () => {
+    it('protection 3 alone would not catch what protections 1 and 2 catch', () => {
+      // §62.2's stated reason for asserting all three separately: "a test
+      // asserting only the third would pass even if the first two protections
+      // were removed". Demonstrated rather than asserted in prose - with the
+      // streaks already wrongly incremented, the count has not dropped, so the
+      // gate sees nothing wrong and publishes a payload built from a corrupted
+      // ledger.
+      const verdict = evaluateGate({
+        candidate: payloadWith({ total_count: ADVERTISED_TOTAL, completeness: 'partial' }),
+        prior: priorPayload(),
+      });
+
+      expect(verdict.decision).toBe(ACCEPT);
     });
   });
 
@@ -346,4 +435,21 @@ function countTombstoned(ledger) {
   }
 
   return total;
+}
+
+/**
+ * @param {any} verdict
+ * @returns {string[]}
+ */
+function ruleIdsOf(verdict) {
+  return verdict.reasons.map((/** @type {any} */ reason) => reason.rule);
+}
+
+/**
+ * @param {any} verdict
+ * @param {string} ruleId
+ * @returns {any}
+ */
+function reasonFor(verdict, ruleId) {
+  return verdict.reasons.find((/** @type {any} */ reason) => reason.rule === ruleId);
 }

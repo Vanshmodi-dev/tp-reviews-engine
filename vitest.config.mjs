@@ -109,6 +109,12 @@ export default defineConfig({
         // suite still exists, so deleting it fails the build rather than
         // quietly retiring this file's only coverage.
         'src/adapters/browser/playwright-chromium.mjs',
+        // Same split, same reason (PH-15). Every DECISION the navigator makes —
+        // the six stop conditions and their order, the stall backoff, the
+        // scroll ratio bounds, the consent classification — lives in its two
+        // pure siblings, both at 100% here. What remains is the browser
+        // driving, which only means anything against a real page.
+        'src/adapters/acquisition/google-dom/navigator.mjs',
       ],
 
       // TEST-CFG-01: thresholds are per-path, never a single global number. A

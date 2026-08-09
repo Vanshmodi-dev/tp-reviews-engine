@@ -24,6 +24,13 @@
 export const STOP_REASONS = Object.freeze([
   'cap_reached',
   'target_reached',
+  // TR-NAV-021. `exhausted` and `stalled` both mean "no new records appeared"
+  // and differ in one clause: `exhausted` additionally reached 95% of the
+  // advertised total. Collapsing them into one reason — which is what this list
+  // did until PH-15 — means a listing whose advertised total is stale or absent
+  // is `partial` forever, so removals are never confirmed and tombstoning
+  // silently stops working.
+  'exhausted',
   'stalled',
   'budget_exhausted',
   'error',

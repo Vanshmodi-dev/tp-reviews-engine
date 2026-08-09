@@ -155,7 +155,17 @@ export default [
       '.publish/**',
       '.artifacts/**',
       'coverage/**',
-      'fixtures/**',
+      // Captured markup, metadata, and golden files. Data, not code — linting
+      // it would report on someone else's markup.
+      //
+      // `fixtures/server/` is deliberately NOT ignored: it is a real HTTP
+      // server with real logic, and it is what every acquisition test depends
+      // on being correct. Exempting it because of where it lives would leave
+      // the one file the whole acquisition suite trusts unchecked.
+      'fixtures/dom/**',
+      'fixtures/api/**',
+      'fixtures/csv/**',
+      'fixtures/ledgers/**',
       'docs/**',
     ],
   },

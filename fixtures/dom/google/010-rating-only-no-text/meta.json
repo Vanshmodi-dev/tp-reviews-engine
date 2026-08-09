@@ -1,0 +1,11 @@
+{
+  "case": "010-rating-only-no-text",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "A rating with no review body is a legitimate, common record. text: null here is data, and INV-02 depends on it not being treated as a missing required field."
+}

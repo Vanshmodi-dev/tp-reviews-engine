@@ -1,0 +1,11 @@
+{
+  "case": "019-markup-in-review-text",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "ADVERSARIAL — SECURITY. Payloads designed to survive naive sanitisation, embedded in review text and author names. Extraction lifts text nodes only; the normaliser REMOVES markup rather than escaping it (§23.3, INV-05). This is the path that reaches every client website."
+}

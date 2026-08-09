@@ -1,0 +1,11 @@
+{
+  "case": "020-mixed-language-set",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "One listing whose reviews are in several languages. Language detection must run per review, not per listing, and a short review must yield null rather than a confident guess (MIN_GRAPHEMES)."
+}

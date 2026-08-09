@@ -1,0 +1,96 @@
+{
+  "shape": "records",
+  "reviews": [
+    {
+      "ordinal": 0,
+      "rating": 5,
+      "relative_date_raw": "vor 2 Wochen",
+      "text": "Ausgezeichneter Service und ein sehr fairer Preis.",
+      "text_truncated": false,
+      "author": {
+        "name": "Hans Müller",
+        "profile_url": "/contrib/100200300",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 1234,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 1,
+      "rating": 4,
+      "relative_date_raw": "vor einem Monat",
+      "text": "Gute Arbeit, pünktlich und sauber.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anna Schmidt",
+        "profile_url": "/contrib/100200309",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 8,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 2,
+      "rating": 5,
+      "relative_date_raw": "vor einem Jahr",
+      "text": "Sehr zu empfehlen.",
+      "text_truncated": false,
+      "author": {
+        "name": "Klaus Weber",
+        "profile_url": "/contrib/100200310",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": null,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": -1,
+        "photo_count": -1,
+        "visited": -1
+      }
+    }
+  ],
+  "quarantined": []
+}

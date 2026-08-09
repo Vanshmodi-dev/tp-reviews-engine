@@ -1,0 +1,76 @@
+{
+  "shape": "records",
+  "reviews": [
+    {
+      "ordinal": 0,
+      "rating": 2,
+      "relative_date_raw": "2 weeks ago",
+      "text": "The appointment was rescheduled twice before anyone arrived.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200300",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": {
+        "text": "Thank you for the five star review! We are delighted you were happy with our excellent service.",
+        "relative_date_raw": "1 week ago"
+      },
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1,
+        "reply_text": 0,
+        "reply_date": 0
+      }
+    },
+    {
+      "ordinal": 1,
+      "rating": 5,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Great work, finished ahead of schedule.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200301",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": {
+        "text": "Thanks!",
+        "relative_date_raw": "3 days ago"
+      },
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1,
+        "reply_text": 0,
+        "reply_date": 0
+      }
+    }
+  ],
+  "quarantined": []
+}

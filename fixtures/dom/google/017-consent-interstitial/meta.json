@@ -1,0 +1,11 @@
+{
+  "case": "017-consent-interstitial",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "ADVERSARIAL. A consent dialog hides the review list entirely. The surface is absent, so this must raise ERR-PARSE-STRUCTURE rather than publishing zero reviews — an unhandled interstitial otherwise wipes a client site on a listing that never changed."
+}

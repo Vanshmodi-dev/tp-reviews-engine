@@ -1,0 +1,11 @@
+{
+  "case": "015-structure-changed",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "ADVERSARIAL. The container resolves but every review node strategy misses, because the vendor replaced role=\"article\" with a generated class and dropped data-review-id. MUST raise ERR-PARSE-EMPTY-UNEXPECTED — not three silent reviews, and not a quiet publish of zero."
+}

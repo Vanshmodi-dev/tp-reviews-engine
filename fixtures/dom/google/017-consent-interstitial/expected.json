@@ -1,0 +1,7 @@
+{
+  "shape": "error",
+  "error": {
+    "code": "ERR-NAV-CONSENT-WALL",
+    "message": "consent interstitial matched \"Before you continue\""
+  }
+}

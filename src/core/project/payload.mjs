@@ -38,6 +38,7 @@
 
 import { publishableRecords } from '../model/ledger.mjs';
 import { SCHEMA_VERSION, findForbiddenFields } from '../model/payload.mjs';
+import { normaliseAvatarUrl, validateUrl } from '../normalize/url.mjs';
 import { applyDisplayFilters, resolveDisplay } from './filters.mjs';
 import { orderForPublication } from './order.mjs';
 import { computeStats } from './stats.mjs';
@@ -94,8 +95,40 @@ function projectAuthor(author) {
   const source = author ?? {};
 
   return Object.fromEntries(
-    AUTHOR_FIELDS.map((field) => [`author_${field}`, source[field] ?? null]),
+    AUTHOR_FIELDS.map((field) => [`author_${field}`, projectAuthorField(field, source[field])]),
   );
+}
+
+/**
+ * Applies the host allowlist to the two author fields that are URLs.
+ *
+ * `core/normalize/url.mjs` implements this control and shipped in PH-02 — and
+ * **nothing had ever called it**. Every `avatar_url` and `profile_url` an
+ * adapter supplied went into the payload exactly as the source gave it, which
+ * coverage never revealed because a module nothing imports is a module the
+ * report never lists.
+ *
+ * That module's own header states the consequence: *"the alternative to a
+ * missing avatar is a `javascript:` URI on a client's page"*. The payload
+ * renders on websites TradyPerch does not control, `avatar_url` becomes an
+ * `<img src>` and `profile_url` an `<a href>`, and neither had been checked for
+ * scheme, host, or embedded credentials.
+ *
+ * Applied at the projection boundary rather than raised as a validation
+ * finding, because the control is defined as **fail-closed, not fatal**: an
+ * unsafe URL becomes `null`, and `null` renders as initials. That is what
+ * `author.initials` is for. Quarantining a whole review over its avatar would
+ * discard a perfectly good record.
+ *
+ * @param {string} field
+ * @param {unknown} value
+ * @returns {unknown}
+ */
+function projectAuthorField(field, value) {
+  if (field === 'avatar_url') return normaliseAvatarUrl(/** @type {any} */ (value));
+  if (field === 'profile_url') return validateUrl(/** @type {any} */ (value));
+
+  return value ?? null;
 }
 
 /** The author fields a payload publishes. `author_key` is deliberately absent. */

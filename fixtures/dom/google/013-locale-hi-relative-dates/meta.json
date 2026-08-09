@@ -1,0 +1,11 @@
+{
+  "case": "013-locale-hi-relative-dates",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "hi",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "Devanagari relative dates, required for the first target market. Also carries the Devanagari truncation marker, which a hard-coded English \"More\" never matches."
+}

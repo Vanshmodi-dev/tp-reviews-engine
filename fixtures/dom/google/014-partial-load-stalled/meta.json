@@ -1,0 +1,11 @@
+{
+  "case": "014-partial-load-stalled",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "ADVERSARIAL. The feed rendered three complete reviews and then stopped mid-node: the fourth article has an open rating widget and no date or text. Extraction must yield three reviews and one quarantine, never four reviews with invented fields. VAL-01: completeness comes from the navigator STOP REASON, never from the count."
+}

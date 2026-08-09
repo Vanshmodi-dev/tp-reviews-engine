@@ -1,0 +1,73 @@
+{
+  "shape": "digest",
+  "review_count": 5000,
+  "quarantined_count": 0,
+  "rating_histogram": {
+    "1": 1000,
+    "2": 1000,
+    "3": 1000,
+    "4": 1000,
+    "5": 1000
+  },
+  "records_sha256": "68bf29b27af66a90b5c1d3f888dd87e25f5faf23368ff152ca904e4e9c5c1a51",
+  "first": {
+    "ordinal": 0,
+    "rating": 1,
+    "relative_date_raw": "1 weeks ago",
+    "text": "Excellent service and very fair pricing. The team arrived on time.",
+    "text_truncated": false,
+    "author": {
+      "name": "Priya Sharma",
+      "profile_url": "/contrib/20001",
+      "avatar_url": null,
+      "badges": []
+    },
+    "meta": {
+      "likes": null,
+      "photo_count": null,
+      "visited": null
+    },
+    "owner_reply": null,
+    "strategy_indices": {
+      "rating": 0,
+      "author_name": 0,
+      "author_profile_url": 0,
+      "author_avatar_url": -1,
+      "text": 0,
+      "relative_date": 0,
+      "likes": -1,
+      "photo_count": -1,
+      "visited": -1
+    }
+  },
+  "last": {
+    "ordinal": 4999,
+    "rating": 5,
+    "relative_date_raw": "6 weeks ago",
+    "text": "Excellent service and very fair pricing. The team arrived on time.",
+    "text_truncated": false,
+    "author": {
+      "name": "Anika Bose",
+      "profile_url": "/contrib/25000",
+      "avatar_url": null,
+      "badges": []
+    },
+    "meta": {
+      "likes": null,
+      "photo_count": null,
+      "visited": null
+    },
+    "owner_reply": null,
+    "strategy_indices": {
+      "rating": 0,
+      "author_name": 0,
+      "author_profile_url": 0,
+      "author_avatar_url": -1,
+      "text": 0,
+      "relative_date": 0,
+      "likes": -1,
+      "photo_count": -1,
+      "visited": -1
+    }
+  }
+}

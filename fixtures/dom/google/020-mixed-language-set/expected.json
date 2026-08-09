@@ -1,0 +1,126 @@
+{
+  "shape": "records",
+  "reviews": [
+    {
+      "ordinal": 0,
+      "rating": 5,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Excellent service and very fair pricing indeed.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200300",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 1,
+      "rating": 4,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Servizio eccellente e prezzo molto onesto. Consigliato.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200330",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 2,
+      "rating": 5,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Excelente servicio y un precio muy justo. Muy recomendable.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200331",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 3,
+      "rating": 3,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Ok.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200332",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    }
+  ],
+  "quarantined": []
+}

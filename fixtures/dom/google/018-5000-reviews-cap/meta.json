@@ -1,0 +1,12 @@
+{
+  "case": "018-5000-reviews-cap",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "The max_reviews cap boundary at full scale. Stored as a one-node template plus a repeat count rather than 1.9 MB of duplicated markup: the case is about VOLUME, not markup shape, and a megabyte of repeated synthetic nodes is unreviewable in a diff and unverifiable by eye — which is the rule fixtures/README.md states. expected.json holds a digest for the same reason.",
+  "repeat": 5000
+}

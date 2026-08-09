@@ -14,9 +14,44 @@
       "minProperties": 1,
       "additionalProperties": { "$ref": "#/$defs/field" }
     },
+    "containers": {
+      "type": "object",
+      "description": "Where the reviews are, before which fields they have. `review_node` is required by TR-EXT-030: nodes are located inside the resolved surface, because a document-wide query risks matching similar cards elsewhere on the page. `reply_node` is what EDR-016 detaches first.",
+      "additionalProperties": false,
+      "properties": {
+        "surface": { "$ref": "#/$defs/container" },
+        "scroll": { "$ref": "#/$defs/container" },
+        "review_node": { "$ref": "#/$defs/container" },
+        "reply_node": { "$ref": "#/$defs/container" }
+      }
+    },
+    "rating_stars": {
+      "type": "object",
+      "description": "Parser P2 of the cascade (EDR-017). Not a field entry because it is not a strategy list: it is a pair of selectors whose element COUNTS are compared. Requires the pack to distinguish filled indicators from unfilled ones — a pack that cannot reports five stars for every review.",
+      "required": ["filled_selector", "notes"],
+      "additionalProperties": false,
+      "properties": {
+        "filled_selector": { "type": "string", "minLength": 1 },
+        "total_selector": {
+          "type": "string",
+          "description": "All indicators. A five-star widget has exactly five; any other count means the selector matched something that is not the rating widget."
+        },
+        "notes": { "type": "string", "minLength": 10 }
+      }
+    },
+    "truncation_markers": {
+      "type": "array",
+      "description": "Locale-aware truncation markers (TR-EXT-060). Data, never hard-coded: an English-only marker fails on every other locale by KEEPING the marker, so the published review ends with the word 'More'.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "signals": {
+      "type": "object",
+      "description": "Structural signals: challenge pages, empty states, consent interstitials. `empty_state` is load-bearing — it is the only thing separating a listing with genuinely zero reviews from a listing whose markup changed, and those two have opposite correct responses (§21.9).",
+      "additionalProperties": { "$ref": "#/$defs/detector" }
+    },
     "detectors": {
       "type": "object",
-      "description": "Structural detectors: challenge pages, empty states, consent dialogs.",
+      "description": "Deprecated alias for `signals`, retained so v1 keeps validating. Packs at v2 and above use `signals`.",
       "additionalProperties": { "$ref": "#/$defs/detector" }
     }
   },
@@ -106,6 +141,18 @@
           "type": "string",
           "minLength": 10,
           "description": "REQUIRED (TR-SEL-013). What this targets and why it is ranked here. Six months later nobody remembers why strategy 2 exists, and a pack of undocumented selectors cannot be safely edited by anyone who did not write it."
+        }
+      }
+    },
+    "container": {
+      "type": "object",
+      "required": ["strategies"],
+      "additionalProperties": false,
+      "properties": {
+        "strategies": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/strategy" }
         }
       }
     },

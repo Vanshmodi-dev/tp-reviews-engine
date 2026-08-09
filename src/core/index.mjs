@@ -176,3 +176,12 @@ export {
 
 // --- Completeness: derived from the navigator's stop reason, never counts. ---
 export { COMPLETENESS_VALUES, classifyCompleteness, isComplete } from './validate/completeness.mjs';
+
+// --- Extraction: pure, string-in, records-out (EDR-015, TR-EXT-010). ---------
+// Added in PH-15, when the navigator became the first caller. PH-13 built these
+// and exported nothing, which was invisible only because nothing above core/
+// had reason to reach for them yet.
+export { extractReviews } from './extract/index.mjs';
+export { attr, descendants, parseHtml, textOf } from './extract/html.mjs';
+export { query, queryAll } from './extract/query.mjs';
+export { classifySignals, detectSignals, hasEmptyState } from './extract/signals.mjs';

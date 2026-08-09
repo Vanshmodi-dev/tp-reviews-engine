@@ -36,6 +36,11 @@ export const COMPLETENESS_VALUES = Object.freeze(['full', 'full_capped', 'partia
  *   ceiling, not the end of the data. `full_capped` is deliberately distinct
  *   from `full`: absence below the cap is still meaningful, but the payload is
  *   knowingly a subset, and coverage rule G-08 treats it differently.
+ * - `exhausted` — the loop stopped growing having already reached 95% of the
+ *   advertised total. That is a finished list, not a stuck one: the remaining
+ *   gap is the source's own count being slightly stale, which it routinely is.
+ *   Treating this as `partial` would be safe for deletions and fatal for
+ *   removals, because tombstoning would never confirm anything again.
  * - `stalled` / `budget_exhausted` — the loop gave up mid-list. Whatever was
  *   not seen was not looked at, so absence means nothing.
  * - `error` — including a detected challenge. Nothing about this run is
@@ -43,6 +48,7 @@ export const COMPLETENESS_VALUES = Object.freeze(['full', 'full_capped', 'partia
  */
 const STOP_REASON_COMPLETENESS = Object.freeze({
   target_reached: 'full',
+  exhausted: 'full',
   cap_reached: 'full_capped',
   stalled: 'partial',
   budget_exhausted: 'partial',

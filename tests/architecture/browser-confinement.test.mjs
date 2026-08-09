@@ -185,12 +185,15 @@ describe('the browser suite is the only cover the wiring has', () => {
   const SUITES = [
     'tests/integration/browser-lifecycle.test.mjs',
     'tests/integration/browser-interception.test.mjs',
+    'tests/integration/browser-navigation.test.mjs',
   ];
 
   it.each(SUITES)('%s exists and exercises the real adapter', (suite) => {
     const found = ALL.find(({ rel }) => rel === suite);
 
     expect(found, `${suite} is missing`).toBeDefined();
-    expect(readFileSync(/** @type {any} */ (found).path, 'utf8')).toContain('launchBrowser');
+    const source = readFileSync(/** @type {any} */ (found).path, 'utf8');
+
+    expect(source).toContain('launchBrowser');
   });
 });

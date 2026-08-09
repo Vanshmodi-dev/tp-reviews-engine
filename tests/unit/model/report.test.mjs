@@ -19,10 +19,20 @@ import {
 } from '../../../src/core/model/report.mjs';
 
 describe('stop reasons (ALG-PAGINATE §19.4)', () => {
-  it('matches the five documented conditions', () => {
+  it('matches the documented conditions, including the sixth', () => {
+    // §19.4 lists five rows. §19.5 and TR-NAV-021 name a sixth reason,
+    // `exhausted`, and this list was missing it until PH-15 — which meant a
+    // listing whose advertised total is stale or absent stopped growing, was
+    // classified `stalled`, and therefore `partial` FOREVER. Removals would
+    // never be confirmed and tombstoning would silently stop working.
+    //
+    // Both no-growth reasons are kept adjacent here on purpose: they differ by
+    // one clause (reaching 95% of advertised) and map to opposite completeness
+    // values, so anything that edits one should be reading the other.
     expect(STOP_REASONS).toEqual([
       'cap_reached',
       'target_reached',
+      'exhausted',
       'stalled',
       'budget_exhausted',
       'error',

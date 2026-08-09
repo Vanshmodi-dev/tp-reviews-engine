@@ -1,0 +1,48 @@
+{
+  "pack_version": "v2",
+  "notes": "Structural assertions the canary evaluates against a live surface (DEL-92). These are NOT extraction rules: they answer 'does this page still look like the page the pack was written for'. A pack can resolve every field and still be reading the wrong element, and a rising fallback rate tells you a strategy moved but not what moved. These say what changed.\n\nEvaluated against a serialised subtree, so the same file runs against the fixture corpus and against a live canary with no difference in code path.",
+  "assertions": [
+    {
+      "id": "A-SURFACE-PRESENT",
+      "severity": "fatal",
+      "selector": "[role='feed'], [data-review-list]",
+      "min": 1,
+      "notes": "The review feed exists at all. If this fails nothing else is worth evaluating — the page is not a listing page, and every other assertion would report a confusing secondary failure."
+    },
+    {
+      "id": "A-NODES-PRESENT",
+      "severity": "fatal",
+      "selector": "[role='article'], [data-review-id]",
+      "min": 1,
+      "notes": "At least one review node. Zero here with the surface present is the exact ambiguity §21.9 turns on: either the listing genuinely has no reviews, or the node selector broke. The canary runs against a listing known to have reviews, so zero means the selector broke."
+    },
+    {
+      "id": "A-RATING-LABELLED",
+      "severity": "error",
+      "selector": "[role='img'][aria-label]",
+      "min": 1,
+      "notes": "The accessible rating label is still present. This is P1 of the cascade and the only locale-independent source of the numeric value; losing it drops every record onto the fallbacks, which is invisible in the payload and obvious here."
+    },
+    {
+      "id": "A-AUTHOR-LINKED",
+      "severity": "warn",
+      "selector": "a[href*='/contrib/']",
+      "min": 1,
+      "notes": "Contributor links still key on the /contrib/ path shape. A warning rather than an error because author_name has a labelled strategy above this one — but if this vanishes, author identity is running on its last strategy."
+    },
+    {
+      "id": "A-DATE-PRESENT",
+      "severity": "error",
+      "selector": "[data-review-date]",
+      "min": 1,
+      "notes": "The relative date element. Required by §21.3, and a missing date quarantines the record — so this failing predicts a quarantine spike rather than explaining one after the fact."
+    },
+    {
+      "id": "A-NO-CHALLENGE",
+      "severity": "fatal",
+      "selector": "form[action*='/sorry/']",
+      "max": 0,
+      "notes": "A challenge form must NOT be present. Stated as a maximum because the dangerous direction here is presence, not absence — and a challenge reaching the assertion stage at all means detection did not fire first, which is CHAL-01's failure."
+    }
+  ]
+}

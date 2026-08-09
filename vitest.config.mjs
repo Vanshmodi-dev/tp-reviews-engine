@@ -28,7 +28,20 @@ export default defineConfig({
         test: {
           name: 'default',
           include: ['tests/**/*.test.mjs'],
-          exclude: ['tests/live/**', '**/node_modules/**'],
+          exclude: [
+            'tests/live/**',
+            // PH-14. Browser tests launch Chromium, and Chromium competes for
+            // CPU with tests/budgets/, which measures a RATIO of two timings
+            // taken moments apart. Under contention that ratio stops meaning
+            // anything: the reconcile scaling budget failed on its first run
+            // alongside the browser suite and passed alone, which is a flaky
+            // test rather than a slow one.
+            //
+            // Same reasoning as `live`, different resource: a project per
+            // requirement, so the fast deterministic suite stays both.
+            'tests/integration/browser-*.test.mjs',
+            '**/node_modules/**',
+          ],
           environment: 'node',
           // 61.3.2: no shared mutable state between tests, and no global setup.
           globals: false,
@@ -43,6 +56,21 @@ export default defineConfig({
           // caught by tests/budgets/, which asserts complexity class rather than
           // wall-clock and would fail long before this timeout mattered.
           testTimeout: 30_000,
+        },
+      },
+      {
+        test: {
+          // Needs a Chromium binary (`npx playwright install chromium`) but no
+          // network. Blocking in CI, which is what TR-BRW-053 requires — a
+          // leaked context is invisible on a two-target local run and fatal on
+          // a twenty-target production shard.
+          name: 'browser',
+          include: ['tests/integration/browser-*.test.mjs'],
+          environment: 'node',
+          globals: false,
+          // Launching and tearing down a browser per case is seconds, not
+          // milliseconds, and the lifecycle suite opens several.
+          testTimeout: 60_000,
         },
       },
       {
@@ -63,7 +91,25 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.mjs'],
-      exclude: ['src/**/index.mjs', 'tests/**'],
+      exclude: [
+        'src/**/index.mjs',
+        'tests/**',
+        // Covered by the `browser` project (tests/integration/browser-*), which
+        // cannot run in this invocation: Chromium competes for CPU with
+        // tests/budgets/, whose signal is a RATIO of two timings.
+        //
+        // Listed rather than left to report 0%, because a misleading 0 invites
+        // the wrong fix. Every decision this file makes — launch flags, context
+        // options, the route policy, the timeout graph, teardown tolerance —
+        // lives in its four pure siblings, which are at 100% here. What remains
+        // is the Playwright wiring, and wiring is only meaningfully tested
+        // against a real browser.
+        //
+        // `tests/architecture/browser-confinement.test.mjs` asserts the browser
+        // suite still exists, so deleting it fails the build rather than
+        // quietly retiring this file's only coverage.
+        'src/adapters/browser/playwright-chromium.mjs',
+      ],
 
       // TEST-CFG-01: thresholds are per-path, never a single global number. A
       // global threshold lets the two 100% modules degrade while the average is

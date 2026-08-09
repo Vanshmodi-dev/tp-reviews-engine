@@ -37,6 +37,25 @@ jobs:
       - name: Setup engine
         uses: ./.github/actions/setup-engine
 
+      # PH-14. The browser lifecycle tests (TR-BRW-053) launch a real Chromium
+      # and touch no network, so they belong in the BLOCKING suite rather than
+      # in tests/live/ — a leaked context is invisible on a two-target local run
+      # and fatal on a twenty-target production shard, which makes it exactly
+      # the kind of defect that must not be merged.
+      #
+      # Cached on the Playwright version, so the ~190 MB download happens on a
+      # version bump rather than on every run. DEP-5 keeps that bump a
+      # deliberate, never auto-merged pull request.
+      - name: Cache Chromium
+        id: chromium-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
       # --- 2. lint --------------------------------------------------------
       # LINT-01: warnings are errors. A warning nobody must fix is a rule
       # nobody follows.
@@ -72,6 +91,14 @@ jobs:
       # --- 7. integration -------------------------------------------------
       - name: Integration
         run: npx vitest run tests/integration --passWithNoTests
+
+      # Its own project, and its own step. Chromium competes for CPU with
+      # tests/budgets/, which measures a RATIO of two timings taken moments
+      # apart — under contention that ratio stops meaning anything, which is a
+      # flaky test rather than a slow one. Blocking, because TR-BRW-053 catches
+      # the leak that is invisible locally and fatal on a full shard.
+      - name: Browser lifecycle and interception
+        run: npm run test:browser
 
       # --- 8. security ----------------------------------------------------
       - name: Security suites

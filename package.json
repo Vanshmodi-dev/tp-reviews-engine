@@ -28,7 +28,8 @@
     "validate:schemas": "node scripts/validate-all.mjs",
     "fixtures:serve": "node -e \"console.error('fixtures:serve: not yet implemented. Lands in PH-15; runs fixtures/server/serve.mjs.')\"",
     "parse:fixture": "node -e \"console.error('parse:fixture: not yet implemented. Lands in PH-13.')\"",
-    "hooks:install": "git config core.hooksPath .githooks"
+    "hooks:install": "git config core.hooksPath .githooks",
+    "test:browser": "vitest run --project browser"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -41,5 +42,8 @@
     "prettier": "^3.9.6",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "playwright": "^1.62.1"
   }
 }

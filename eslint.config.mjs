@@ -123,6 +123,30 @@ const tpre = {
   },
 };
 
+/**
+ * PW-01 mechanism 1 of 2: `playwright` is importable from exactly one file.
+ *
+ * The usual breach is not a second browser launch — it is the navigator
+ * importing playwright *"just for a type"*, which makes the navigator
+ * untestable without Chromium and takes the pure pipeline with it.
+ *
+ * Repeated into every block that sets `no-restricted-imports` because the rule
+ * REPLACES rather than merges: a later block re-stating patterns for core/ would
+ * silently drop this ban for the whole directory.
+ */
+const NO_PLAYWRIGHT = Object.freeze([
+  {
+    name: 'playwright',
+    message:
+      'TR-BRW-001 / DR-3: adapters/browser/playwright-chromium.mjs is the only file that may import playwright. The documented Puppeteer migration path is one file only while that stays true.',
+  },
+  {
+    name: 'playwright-core',
+    message:
+      'TR-BRW-001 / DR-3: importing playwright-core is the same violation wearing a different package name.',
+  },
+]);
+
 export default [
   {
     ignores: [
@@ -156,6 +180,7 @@ export default [
     },
     rules: {
       // --- group 1: structural limits (TRD 67.2) ---
+      'no-restricted-imports': ['error', { paths: [...NO_PLAYWRIGHT] }],
       complexity: ['error', 10],
       'max-lines-per-function': ['error', { max: 60, skipBlankLines: true, skipComments: true }],
       'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
@@ -230,6 +255,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          paths: [...NO_PLAYWRIGHT],
           patterns: [
             {
               group: ['**/adapters/**', '**/infra/**', '**/app/**', '**/cli/**', '**/ports/**'],
@@ -304,6 +330,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          paths: [...NO_PLAYWRIGHT],
           patterns: [
             {
               group: ['**/adapters/**'],
@@ -330,6 +357,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          paths: [...NO_PLAYWRIGHT],
           patterns: [
             {
               group: ['**/adapters/*/**', '**/adapters/*'],
@@ -351,6 +379,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          paths: [...NO_PLAYWRIGHT],
           patterns: [
             {
               group: ['**/adapters/**', '**/app/**', '**/cli/**', '**/core/**'],
@@ -369,6 +398,7 @@ export default [
       'no-restricted-imports': [
         'error',
         {
+          paths: [...NO_PLAYWRIGHT],
           patterns: [
             {
               group: ['**/adapters/**'],
@@ -453,5 +483,32 @@ export default [
     // narrows the baseline block back to that scope rather than weakening it.
     files: ['*.config.mjs'],
     rules: { 'no-restricted-syntax': 'off' },
+  },
+
+  // ------------------------------------- PW-01: the one permitted importer
+  {
+    files: ['src/adapters/browser/playwright-chromium.mjs'],
+    rules: {
+      // Restates the adapter restrictions WITHOUT the playwright ban. Written
+      // out rather than spread, so that reading this block tells you exactly
+      // what this file may and may not import — which is the whole point of
+      // there being one of it.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/adapters/*/**', '**/adapters/*'],
+              message:
+                'DR-3: an adapter never imports another adapter. Shared pure logic belongs in core/, shared generic logic in infra/.',
+            },
+            {
+              group: ['**/core/*/**'],
+              message: 'DR-6: import the core through core/index.mjs, never past it.',
+            },
+          ],
+        },
+      ],
+    },
   },
 ];

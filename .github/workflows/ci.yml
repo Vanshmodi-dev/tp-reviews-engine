@@ -37,11 +37,11 @@ jobs:
       - name: Setup engine
         uses: ./.github/actions/setup-engine
 
-      # PH-14. The browser lifecycle tests (TR-BRW-053) launch a real Chromium
-      # and touch no network, so they belong in the BLOCKING suite rather than
-      # in tests/live/ — a leaked context is invisible on a two-target local run
-      # and fatal on a twenty-target production shard, which makes it exactly
-      # the kind of defect that must not be merged.
+      # PH-14. The browser suite (TR-BRW-053) launches a real Chromium and
+      # touches no network, so it is NOT in tests/live/ — it blocks a merge. A
+      # leaked context is invisible on a two-target local run and fatal on a
+      # twenty-target production shard, which is exactly the kind of defect that
+      # must not reach main. It runs as its own project, in its own step below.
       #
       # Cached on the Playwright version, so the ~190 MB download happens on a
       # version bump rather than on every run. DEP-5 keeps that bump a
@@ -55,6 +55,21 @@ jobs:
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+
+      # Ubuntu 24.04 restricts unprivileged user namespaces through AppArmor,
+      # which stops Chromium's sandbox from starting at all.
+      #
+      # Playwright offers two remedies and this takes the one it calls
+      # preferred: configure the environment to SUPPORT sandboxing, rather than
+      # launching with `chromiumSandbox: false`. TRD 16.1 orders it the same way
+      # - "enabled where the runner permits; disable only if the runner requires
+      # it, and record why".
+      #
+      # The runner does not require it. Dropping the sandbox would remove the
+      # process boundary between untrusted page content and the runner on every
+      # CI run, permanently, to save one line here.
+      - name: Allow Chromium's sandbox to start
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       # --- 2. lint --------------------------------------------------------
       # LINT-01: warnings are errors. A warning nobody must fix is a rule
@@ -89,8 +104,12 @@ jobs:
         run: npx vitest run tests/architecture --passWithNoTests
 
       # --- 7. integration -------------------------------------------------
+      # Scoped to the default project. Without `--project`, vitest matches the
+      # path across EVERY project, so this step silently re-ran the browser
+      # suite - the same tests twice, and a Chromium launch inside the step
+      # that is meant to be browser-free.
       - name: Integration
-        run: npx vitest run tests/integration --passWithNoTests
+        run: npx vitest run --project default tests/integration --passWithNoTests
 
       # Its own project, and its own step. Chromium competes for CPU with
       # tests/budgets/, which measures a RATIO of two timings taken moments

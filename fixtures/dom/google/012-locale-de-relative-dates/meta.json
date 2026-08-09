@@ -1,0 +1,11 @@
+{
+  "case": "012-locale-de-relative-dates",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "de",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "IR-04 and prefix-ordered relative dates. \"vor einem Monat\" has no digit to match, which is the singular-form bug a plural-only regex ships with. Also carries a dot-grouped like count, where a comma-stripping parser reports 1234 for 1.234."
+}

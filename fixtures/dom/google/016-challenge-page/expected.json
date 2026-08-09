@@ -1,0 +1,7 @@
+{
+  "shape": "error",
+  "error": {
+    "code": "ERR-BLOCKED-CHALLENGE",
+    "message": "high-confidence signal \"challenge\" matched \"unusual traffic\""
+  }
+}

@@ -1,0 +1,286 @@
+{
+  "meta": {
+    "source": "google",
+    "version": "v2",
+    "min_engine_version": "1.0.0",
+    "authored_at": "2026-08-05",
+    "notes": "v2 is the first pack extraction can actually run. v1 declared `fields` only, so it had no `containers.review_node` (TR-EXT-030 requires one) and no `containers.reply_node` for EDR-016 to detach — the two things per-record extraction cannot start without. v1 is retained unedited under SEL-01 and remains the pinned pack for anything already using it. Two v1 selectors are also corrected here: `author_name` strategy 1 used `:first-child`, which the supported selector subset rejects, so it was dead weight that never ran; and `relative_date` strategy 0 matched any labelled element containing 'ago', which on a review with an owner reply could match the reply's date. Fixed by scoping both."
+  },
+  "containers": {
+    "surface": {
+      "strategies": [
+        {
+          "kind": "role",
+          "selector": "[role='main'] [role='feed']",
+          "notes": "The review feed exposed to assistive technology. Scoping to the feed rather than the document is what stops a document-wide review-node query from matching the 'similar places' cards further down the page (TR-EXT-030)."
+        },
+        {
+          "kind": "data-attribute",
+          "selector": "[data-review-list]",
+          "notes": "The vendor's own list marker. Ranked below the role because it is internal tooling and carries no external pressure against renaming."
+        }
+      ]
+    },
+    "scroll": {
+      "strategies": [
+        {
+          "kind": "role",
+          "selector": "[role='feed']",
+          "notes": "The feed is the element that virtualises, so it is the element the navigator scrolls. Distinct from the surface only in renderings where the feed sits inside a separately scrolling wrapper."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "[role='main'] > div",
+          "notes": "The scroll wrapper when the feed itself does not scroll. Layout-dependent, hence ranked below the role, but it survives class renames."
+        }
+      ]
+    },
+    "review_node": {
+      "strategies": [
+        {
+          "kind": "role",
+          "selector": "[role='article']",
+          "notes": "Each review is exposed as an article. A user-facing accessibility contract, so it changes rarely and never quietly — breaking it would break screen readers first, which is a louder failure for the vendor than for us."
+        },
+        {
+          "kind": "data-attribute",
+          "selector": "[data-review-id]",
+          "notes": "The vendor's own review identifier. Stable while their client-side code depends on it, which is why it outranks anything structural, but it is theirs to rename without notice."
+        }
+      ]
+    },
+    "reply_node": {
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-owner-reply]",
+          "notes": "The owner-reply subtree, detached before any other field is read (EDR-016). Ranked first because it identifies the reply structurally rather than by the phrase that introduces it."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "[role='article'] [role='comment']",
+          "notes": "The reply exposed as a comment inside the review it answers. Structure-dependent, so it survives restyling but not a layout rewrite — and a missed reply becomes review text, which is exactly the FR-033 failure."
+        }
+      ]
+    }
+  },
+  "fields": {
+    "author_name": {
+      "required": true,
+      "strategies": [
+        {
+          "kind": "aria-label-pattern",
+          "selector": "[aria-label^='Review by']",
+          "attribute": "aria-label",
+          "pattern": "^Review by (.+)$",
+          "notes": "The accessible label carries the author name as a value rather than as rendered text, so it survives a redesign that changes how the name is displayed. The prefix match keeps it from picking up a photo credit that uses the same label shape."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "a[href*='/contrib/']",
+          "notes": "The contributor link. Keys on the href shape, so it survives class renames and breaks only on a layout rewrite. Replaces v1's `:first-child` variant, which the selector subset rejects and which therefore never ran."
+        },
+        {
+          "kind": "css",
+          "selector": ".review-author-name",
+          "notes": "Last resort. Fastest to write and first to break; present so a redesign taking out both strategies above degrades to a working fallback rather than a quarantined record. Its use should show up in the strategy histogram as a signal to re-author."
+        }
+      ]
+    },
+    "author_profile_url": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "structural-relative",
+          "selector": "a[href*='/contrib/']",
+          "attribute": "href",
+          "notes": "The contributor profile link. Optional because some renderings show a name with no link, and validated against the host allowlist later in normalisation rather than here."
+        }
+      ]
+    },
+    "author_avatar_url": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "img[data-avatar]",
+          "attribute": "src",
+          "notes": "The avatar URL. Captured as a URL and NEVER fetched: fetching would put the engine on the source's asset infrastructure for every review on every harvest, and make the payload depend on a request that can fail."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "a[href*='/contrib/'] img",
+          "attribute": "src",
+          "notes": "The image inside the contributor link. Ranked second because it assumes the avatar is nested in the profile link, which is a layout assumption rather than a declared one."
+        }
+      ]
+    },
+    "author_badges": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-author-badge]",
+          "notes": "Local-guide indicators and review-count text. Optional and multi-valued; absence is ordinary."
+        }
+      ]
+    },
+    "rating": {
+      "required": true,
+      "strategies": [
+        {
+          "kind": "aria-label-pattern",
+          "selector": "[role='img'][aria-label]",
+          "attribute": "aria-label",
+          "pattern": "([0-9](?:[.,][0-9])?)",
+          "notes": "P1 of the cascade, and the selector must NOT key on the English word 'star'. The pack is pinned per SOURCE, not per locale, and a German listing renders '5 Sterne'. Fixture 012 caught exactly that: every review in the listing quarantined, because P1 missed on the label text, P2 found no indicators, and P3 had nothing to read — a 100% quarantine rate on a listing whose markup was entirely healthy. Within a review node the labelled image IS the rating widget, and the digit comes from the pattern, which is locale-independent. The optional decimal group is deliberate: it lets an aggregate business rating like 4.3 be READ so the integer post-check can reject it (TR-EXT-040), rather than being silently truncated to 4."
+        },
+        {
+          "kind": "data-attribute",
+          "selector": "[data-rating]",
+          "attribute": "data-rating",
+          "notes": "The vendor's own rating attribute. Ranked below the aria label because it is internal tooling rather than a user-facing contract, so nothing external discourages renaming it."
+        },
+        {
+          "kind": "css",
+          "selector": ".review-rating",
+          "notes": "Last resort. A generated class name; expect breakage on any restyle. Present so a rating failure degrades rather than quarantines."
+        }
+      ]
+    },
+    "rating_numeric": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-rating-value]",
+          "attribute": "data-rating-value",
+          "notes": "P3 of the cascade: a bare numeric string. Last resort by construction — it reaches the post-check with the least context about what it read."
+        },
+        {
+          "kind": "text-pattern",
+          "selector": ".rating-numeric",
+          "pattern": "([0-9](?:[.,][0-9])?)",
+          "notes": "The visible numeric rating where one is rendered. Ranked last in the last parser; if this is what resolved, the pack needs re-authoring."
+        }
+      ]
+    },
+    "relative_date": {
+      "required": true,
+      "strategies": [
+        {
+          "kind": "aria-label-pattern",
+          "selector": "[data-review-date][aria-label]",
+          "attribute": "aria-label",
+          "notes": "The accessible label states the relative date in full where the visible text is sometimes abbreviated to '2mo'. Scoped to the review's own date element: v1 matched any labelled element containing 'ago', which on a review with an owner reply could return the REPLY's date."
+        },
+        {
+          "kind": "data-attribute",
+          "selector": "[data-review-date]",
+          "notes": "The visible relative date. Captured verbatim regardless of locale — the raw phrase is the audit trail (TR-EXT-050), and resolution happens in core/dates."
+        }
+      ]
+    },
+    "text": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-review-text]",
+          "notes": "The review body. Optional because a rating-only review is legitimate and common (fixture 010); a null here is real data rather than an extraction failure."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "[lang]",
+          "notes": "The body is the element carrying a language attribute, which the vendor sets so translation can be offered. Doubles as a language hint when the detector is uncertain."
+        }
+      ]
+    },
+    "likes": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-likes]",
+          "notes": "The helpful/like count. Optional, and null when unresolved rather than 0 — those are different claims, and publishing 0 for 'we could not read it' hides a broken strategy behind a plausible number."
+        }
+      ]
+    },
+    "photo_count": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-photo-count]",
+          "notes": "Photos attached to the review. Same null-versus-zero reasoning as `likes`."
+        }
+      ]
+    },
+    "visited": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-visit-meta]",
+          "notes": "Visit metadata where the source renders it. Present on some listing categories and absent on most."
+        }
+      ]
+    },
+    "reply_text": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-owner-reply-text]",
+          "notes": "The owner's reply body, read from the subtree detached in step 1. Optional: most reviews have none."
+        },
+        {
+          "kind": "structural-relative",
+          "selector": "[role='comment'] [lang]",
+          "notes": "The reply body inside a comment-role subtree. Ranked second because it assumes the reply's structure rather than reading a declared marker."
+        }
+      ]
+    },
+    "reply_date": {
+      "required": false,
+      "strategies": [
+        {
+          "kind": "data-attribute",
+          "selector": "[data-owner-reply-date]",
+          "notes": "The reply's own relative date, captured verbatim for the same reason the review's is: the resolved date is pinned once and the raw phrase remains the audit trail."
+        }
+      ]
+    }
+  },
+  "rating_stars": {
+    "filled_selector": "[role='img'] [data-star-filled]",
+    "total_selector": "[role='img'] [data-star]",
+    "notes": "P2 of the cascade. Requires BOTH selectors: a pack that cannot distinguish filled from unfilled counts every star and reports 5 for every review, which looks like success on a five-star review and is invisible until someone notices the mean is 5.0. The total is checked to be exactly five, because any other count means the selector matched something that is not the rating widget."
+  },
+  "truncation_markers": [
+    "More",
+    "…More",
+    "Mehr",
+    "और देखें",
+    "المزيد",
+    "Plus",
+    "Más"
+  ],
+  "signals": {
+    "challenge": {
+      "patterns": ["unusual traffic", "verify you are human", "/sorry/index"],
+      "confidence": "high",
+      "notes": "A challenge is TERMINAL and never retried (INV-07). Detected structurally rather than by status code, because the challenge is served as a 200."
+    },
+    "empty_state": {
+      "patterns": ["No reviews yet", "Be the first to review"],
+      "confidence": "high",
+      "notes": "Distinguishes a listing with genuinely no reviews from a page that failed to render them. Without it both look like zero reviews — and one of those is a reason to publish nothing while the other is a reason to raise ERR-PARSE-EMPTY-UNEXPECTED (CH-06)."
+    },
+    "consent": {
+      "patterns": ["Before you continue", "Accept all", "Reject all"],
+      "confidence": "medium",
+      "notes": "The consent interstitial hides the review list entirely. Medium confidence because the phrases are generic enough to appear in ordinary page content."
+    }
+  }
+}

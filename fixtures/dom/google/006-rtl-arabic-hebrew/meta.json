@@ -1,0 +1,11 @@
+{
+  "case": "006-rtl-arabic-hebrew",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "ar",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "Right-to-left scripts through extraction. Proves no step reverses, reorders, or inserts bidi control characters, and that the raw relative-date phrase survives verbatim."
+}

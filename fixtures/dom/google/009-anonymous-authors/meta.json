@@ -1,0 +1,11 @@
+{
+  "case": "009-anonymous-authors",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "EXT-03. No resolvable author name. The record must be QUARANTINED rather than published as \"Anonymous\": a synthesised name is indistinguishable downstream from a real one and enters identity_hash."
+}

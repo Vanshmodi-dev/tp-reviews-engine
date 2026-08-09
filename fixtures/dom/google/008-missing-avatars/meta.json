@@ -1,0 +1,11 @@
+{
+  "case": "008-missing-avatars",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "An optional field that does not resolve. avatar_url must be null, never a placeholder image URL — a fabricated default would be published to a client site as if it were the reviewer."
+}

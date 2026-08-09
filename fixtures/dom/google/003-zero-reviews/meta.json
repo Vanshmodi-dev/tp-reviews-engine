@@ -1,0 +1,11 @@
+{
+  "case": "003-zero-reviews",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": true,
+  "challenge_signal": false,
+  "exercises": "A listing with genuinely no reviews AND the empty-state signal present. total_count: 0 is legitimate; without the signal the same markup must raise ERR-PARSE-EMPTY-UNEXPECTED, which case 015 covers."
+}

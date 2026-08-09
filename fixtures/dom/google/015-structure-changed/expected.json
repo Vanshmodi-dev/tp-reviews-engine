@@ -1,0 +1,7 @@
+{
+  "shape": "error",
+  "error": {
+    "code": "ERR-PARSE-EMPTY-UNEXPECTED",
+    "message": "the container matched but held no review nodes, and no empty-state signal was seen"
+  }
+}

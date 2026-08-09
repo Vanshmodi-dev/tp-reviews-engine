@@ -1,0 +1,11 @@
+{
+  "case": "005-truncated-long-text",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "TR-EXT-060/061/062. The body ends with a declared truncation marker, split across lines so that matching only works after whitespace canonicalisation. The marker must be removed AND text_truncated set."
+}

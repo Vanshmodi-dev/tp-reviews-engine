@@ -1,0 +1,3606 @@
+{
+  "shape": "records",
+  "reviews": [
+    {
+      "ordinal": 0,
+      "rating": 1,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200300",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 0,
+        "photo_count": 0,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 1,
+      "rating": 2,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200301",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 1,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 2,
+      "rating": 3,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200302",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 2,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 3,
+      "rating": 4,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200303",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 3,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 4,
+      "rating": 5,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200304",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 4,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 5,
+      "rating": 1,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200305",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 5,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 6,
+      "rating": 2,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200306",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 6,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 7,
+      "rating": 3,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200307",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 7,
+        "photo_count": 3,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 8,
+      "rating": 4,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200308",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 8,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 9,
+      "rating": 5,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200309",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 9,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 10,
+      "rating": 1,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200310",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 10,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 11,
+      "rating": 2,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200311",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 11,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 12,
+      "rating": 3,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200312",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 13,
+      "rating": 4,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200313",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 13,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 14,
+      "rating": 5,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200314",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 14,
+        "photo_count": 2,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 15,
+      "rating": 1,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200315",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 15,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 16,
+      "rating": 2,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200316",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 16,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 17,
+      "rating": 3,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200317",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 17,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 18,
+      "rating": 4,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200318",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 18,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 19,
+      "rating": 5,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200319",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 19,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 20,
+      "rating": 1,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200320",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 20,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 21,
+      "rating": 2,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200321",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 21,
+        "photo_count": 1,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 22,
+      "rating": 3,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200322",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 22,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 23,
+      "rating": 4,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200323",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 23,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 24,
+      "rating": 5,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200324",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 24,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 25,
+      "rating": 1,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200325",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 25,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 26,
+      "rating": 2,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200326",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 26,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 27,
+      "rating": 3,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200327",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 27,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 28,
+      "rating": 4,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200328",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 28,
+        "photo_count": 0,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 29,
+      "rating": 5,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200329",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 29,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 30,
+      "rating": 1,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200330",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 30,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 31,
+      "rating": 2,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200331",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 31,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 32,
+      "rating": 3,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200332",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 32,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 33,
+      "rating": 4,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200333",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 33,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 34,
+      "rating": 5,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200334",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 34,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 35,
+      "rating": 1,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200335",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 35,
+        "photo_count": 3,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 36,
+      "rating": 2,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200336",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 36,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 37,
+      "rating": 3,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200337",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 37,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 38,
+      "rating": 4,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200338",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 38,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 39,
+      "rating": 5,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200339",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 39,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 40,
+      "rating": 1,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200340",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 0,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 41,
+      "rating": 2,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200341",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 1,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 42,
+      "rating": 3,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200342",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 2,
+        "photo_count": 2,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 43,
+      "rating": 4,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200343",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 3,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 44,
+      "rating": 5,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200344",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 4,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 45,
+      "rating": 1,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200345",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 5,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 46,
+      "rating": 2,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200346",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 6,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 47,
+      "rating": 3,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200347",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 7,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 48,
+      "rating": 4,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200348",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 8,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 49,
+      "rating": 5,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200349",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 9,
+        "photo_count": 1,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 50,
+      "rating": 1,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200350",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 10,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 51,
+      "rating": 2,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200351",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 11,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 52,
+      "rating": 3,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200352",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 53,
+      "rating": 4,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200353",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 13,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 54,
+      "rating": 5,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200354",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 14,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 55,
+      "rating": 1,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200355",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 15,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 56,
+      "rating": 2,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200356",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 16,
+        "photo_count": 0,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 57,
+      "rating": 3,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200357",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 17,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 58,
+      "rating": 4,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200358",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 18,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 59,
+      "rating": 5,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200359",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 19,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 60,
+      "rating": 1,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200360",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 20,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 61,
+      "rating": 2,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200361",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 21,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 62,
+      "rating": 3,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200362",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 22,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 63,
+      "rating": 4,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200363",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 23,
+        "photo_count": 3,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 64,
+      "rating": 5,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200364",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 24,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 65,
+      "rating": 1,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200365",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 25,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 66,
+      "rating": 2,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200366",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 26,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 67,
+      "rating": 3,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200367",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 27,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 68,
+      "rating": 4,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200368",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 28,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 69,
+      "rating": 5,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200369",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 29,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 70,
+      "rating": 1,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200370",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 30,
+        "photo_count": 2,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 71,
+      "rating": 2,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200371",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 31,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 72,
+      "rating": 3,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200372",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 32,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 73,
+      "rating": 4,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200373",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 33,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 74,
+      "rating": 5,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200374",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 34,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 75,
+      "rating": 1,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200375",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 35,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 76,
+      "rating": 2,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200376",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 36,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 77,
+      "rating": 3,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200377",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 37,
+        "photo_count": 1,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 78,
+      "rating": 4,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200378",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 38,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 79,
+      "rating": 5,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200379",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 39,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 80,
+      "rating": 1,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200380",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 0,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 81,
+      "rating": 2,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200381",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 1,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 82,
+      "rating": 3,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200382",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 2,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 83,
+      "rating": 4,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200383",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 3,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 84,
+      "rating": 5,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200384",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 4,
+        "photo_count": 0,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 85,
+      "rating": 1,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200385",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 5,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 86,
+      "rating": 2,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200386",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 6,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 87,
+      "rating": 3,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200387",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 7,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 88,
+      "rating": 4,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200388",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 8,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 89,
+      "rating": 5,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200389",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 9,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 90,
+      "rating": 1,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200390",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 10,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 91,
+      "rating": 2,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200391",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 11,
+        "photo_count": 3,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 92,
+      "rating": 3,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/100200392",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 93,
+      "rating": 4,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/100200393",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 13,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 94,
+      "rating": 5,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/100200394",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 14,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 95,
+      "rating": 1,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/100200395",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 15,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 96,
+      "rating": 2,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/100200396",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 16,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 97,
+      "rating": 3,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/100200397",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 17,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 98,
+      "rating": 4,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/100200398",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 18,
+        "photo_count": 2,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 99,
+      "rating": 5,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/100200399",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 19,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 100,
+      "rating": 1,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/1002003100",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 20,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 101,
+      "rating": 2,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/1002003101",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 21,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 102,
+      "rating": 3,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/1002003102",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 22,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 103,
+      "rating": 4,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/1002003103",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 23,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 104,
+      "rating": 5,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/1002003104",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 24,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 105,
+      "rating": 1,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/1002003105",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 25,
+        "photo_count": 1,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 106,
+      "rating": 2,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/1002003106",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 26,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 107,
+      "rating": 3,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/1002003107",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 27,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 108,
+      "rating": 4,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/1002003108",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 28,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 109,
+      "rating": 5,
+      "relative_date_raw": "11 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/1002003109",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 29,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 110,
+      "rating": 1,
+      "relative_date_raw": "1 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/1002003110",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 30,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 111,
+      "rating": 2,
+      "relative_date_raw": "2 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/1002003111",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 31,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 112,
+      "rating": 3,
+      "relative_date_raw": "3 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Priya Sharma",
+        "profile_url": "/contrib/1002003112",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 32,
+        "photo_count": 0,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 113,
+      "rating": 4,
+      "relative_date_raw": "4 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Daniel Okoro",
+        "profile_url": "/contrib/1002003113",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 33,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 114,
+      "rating": 5,
+      "relative_date_raw": "5 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Mei-Ling Chen",
+        "profile_url": "/contrib/1002003114",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 34,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 115,
+      "rating": 1,
+      "relative_date_raw": "6 weeks ago",
+      "text": "Excellent service and very fair pricing. The team arrived on time.",
+      "text_truncated": false,
+      "author": {
+        "name": "Sofia Rossi",
+        "profile_url": "/contrib/1002003115",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 35,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 116,
+      "rating": 2,
+      "relative_date_raw": "7 weeks ago",
+      "text": "Booked a same-day repair and they were finished within the hour.",
+      "text_truncated": false,
+      "author": {
+        "name": "Ahmed Al-Rashid",
+        "profile_url": "/contrib/1002003116",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 36,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 117,
+      "rating": 3,
+      "relative_date_raw": "8 weeks ago",
+      "text": "Polite, tidy and thorough. Explained the fault before starting work.",
+      "text_truncated": false,
+      "author": {
+        "name": "Grace Mwangi",
+        "profile_url": "/contrib/1002003117",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 37,
+        "photo_count": null,
+        "visited": "Visited in June"
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": 0
+      }
+    },
+    {
+      "ordinal": 118,
+      "rating": 4,
+      "relative_date_raw": "9 weeks ago",
+      "text": "Good work overall, though the first appointment was rescheduled.",
+      "text_truncated": false,
+      "author": {
+        "name": "Tomás Herrera",
+        "profile_url": "/contrib/1002003118",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 38,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 119,
+      "rating": 5,
+      "relative_date_raw": "10 weeks ago",
+      "text": "Fixed a problem two other firms had given up on. Recommended.",
+      "text_truncated": false,
+      "author": {
+        "name": "Anika Bose",
+        "profile_url": "/contrib/1002003119",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 39,
+        "photo_count": 3,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": 0,
+        "visited": -1
+      }
+    }
+  ],
+  "quarantined": []
+}

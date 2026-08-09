@@ -1,0 +1,11 @@
+{
+  "case": "007-emoji-and-cjk",
+  "source": "google",
+  "pack_version": "v2",
+  "locale": "en",
+  "captured_at": "2026-08-05",
+  "origin": "synthetic",
+  "empty_state_signal": false,
+  "challenge_signal": false,
+  "exercises": "ZWJ emoji sequences and CJK text. IR-05: a length bound applied by code unit rather than grapheme cluster splits the family emoji into invalid sequences. Extraction must pass them through untouched for the normaliser to bound correctly."
+}

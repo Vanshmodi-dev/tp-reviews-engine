@@ -1,0 +1,66 @@
+{
+  "shape": "records",
+  "reviews": [
+    {
+      "ordinal": 0,
+      "rating": 5,
+      "relative_date_raw": "2 सप्ताह पहले",
+      "text": "बहुत अच्छी सेवा और उचित मूल्य।",
+      "text_truncated": false,
+      "author": {
+        "name": "अनिका बोस",
+        "profile_url": "/contrib/100200300",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    },
+    {
+      "ordinal": 1,
+      "rating": 4,
+      "relative_date_raw": "एक महीने पहले",
+      "text": "काम अच्छा था और समय पर पूरा हुआ।",
+      "text_truncated": true,
+      "author": {
+        "name": "राहुल वर्मा",
+        "profile_url": "/contrib/100200311",
+        "avatar_url": "https://lh3.googleusercontent.com/a/avatar-1",
+        "badges": []
+      },
+      "meta": {
+        "likes": 12,
+        "photo_count": null,
+        "visited": null
+      },
+      "owner_reply": null,
+      "strategy_indices": {
+        "rating": 0,
+        "author_name": 0,
+        "author_profile_url": 0,
+        "author_avatar_url": 0,
+        "text": 0,
+        "relative_date": 0,
+        "likes": 0,
+        "photo_count": -1,
+        "visited": -1
+      }
+    }
+  ],
+  "quarantined": []
+}

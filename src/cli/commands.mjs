@@ -10,6 +10,8 @@
 
 import { loadConfig } from '../app/config/index.mjs';
 import { blocks, validateSemantics } from '../app/config/semantic.mjs';
+import { byPriority, computeTargets } from '../app/registry.mjs';
+import { planShards } from '../app/shard-planner.mjs';
 import { EXIT } from './exit-codes.mjs';
 
 /**
@@ -208,25 +210,64 @@ export function planCommand(deps) {
   return {
     name: 'plan',
     summary: 'Print the due set and shard assignment. Writes nothing.',
-    options: { shard: { type: 'string' }, shards: { type: 'string' } },
+    options: { shard: { type: 'string' }, shards: { type: 'string' }, all: { type: 'boolean' } },
     async run(/** @type {any} */ { flags }) {
-      const due = await deps.dueSet();
       const shards = Number(flags.shards ?? 1);
       const index = Number(flags.shard ?? 0);
+      const health = (await deps.health?.()) ?? {};
+      const all =
+        deps.clients === undefined ? await legacyTargets(deps) : await realTargets(deps, health);
+      // A target that will not run still appears under `--all`, with its reason
+      // (§28.3). A client that vanishes from the plan is indistinguishable from
+      // one that was never configured, and "why is this one not updating" is
+      // the question the plan exists to answer.
+      const due = flags.all === true ? all : all.filter((/** @type {any} */ t) => t.due !== false);
+      const plan = planShards(due, shards, health);
+      const mine = plan.shards[index] ?? { targets: [], cost: 0 };
 
       return {
         code: EXIT.OK,
         output: {
           total: due.length,
-          shard: { index, of: shards },
-          targets: due.filter(
-            (/** @type {any} */ _entry, /** @type {number} */ position) =>
-              position % shards === index,
-          ),
+          shard: { index, of: shards, cost: mine.cost, balance: plan.balance },
+          targets: mine.targets,
+          ...(flags.all === true
+            ? { skipped: all.filter((/** @type {any} */ t) => t.due === false) }
+            : {}),
         },
       };
     },
   };
+}
+
+/**
+ * The due set, computed from configuration (DEL-67).
+ *
+ * `now` is read here and passed in, so `app/registry.mjs` stays pure and the
+ * whole command stays free of side effects — reading a clock changes nothing.
+ *
+ * @param {any} deps
+ * @param {Record<string, any>} health
+ * @returns {Promise<any[]>}
+ */
+async function realTargets(deps, health) {
+  return byPriority(
+    computeTargets({
+      clients: await deps.clients(),
+      now: (await deps.now?.()) ?? Date.now(),
+      health,
+    }),
+  );
+}
+
+/**
+ * The pre-PH-17 shape, kept so a caller supplying only `dueSet` still works.
+ *
+ * @param {any} deps
+ * @returns {Promise<any[]>}
+ */
+async function legacyTargets(deps) {
+  return (await deps.dueSet?.()) ?? [];
 }
 
 /**

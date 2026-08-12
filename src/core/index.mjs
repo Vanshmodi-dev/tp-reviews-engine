@@ -185,3 +185,22 @@ export { extractReviews } from './extract/index.mjs';
 export { attr, checkFixtureShape, descendants, parseHtml, textOf } from './extract/html.mjs';
 export { query, queryAll } from './extract/query.mjs';
 export { classifySignals, detectSignals, hasEmptyState } from './extract/signals.mjs';
+
+// --- Health, metrics, and alerting (PH-20). --------------------------------
+export {
+  HEALTH_RECORD_VERSION,
+  RECORDED_OUTCOMES,
+  buildHealthRecord,
+  checkHealthRecord,
+  parseSeries,
+  toJsonl,
+} from './health/record.mjs';
+export { BANDS, classifyMetric, computeMetrics, percentile, report } from './health/metrics.mjs';
+export {
+  alertFor,
+  closingComment,
+  decideDelivery,
+  fingerprint,
+  resolved,
+  shouldDeliver,
+} from './health/alerts.mjs';

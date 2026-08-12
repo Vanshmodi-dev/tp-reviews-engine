@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reviews — TP Reviews static example</title>
+
+    <!--
+      DEL-191. A complete, working integration of the reference renderer with
+      no build step and no framework.
+
+      The Content-Security-Policy below is the one from the static-html recipe,
+      applied for real rather than quoted. That is the point of this file: it
+      is the strict policy a security-conscious client will already have, and
+      the integration has to work under it rather than ask for an exception.
+
+      Note there is no `'unsafe-inline'` for either scripts or styles. Both the
+      integration code and the page styling are external files for that reason
+      — an inline `<script type="module">` is blocked outright by
+      `script-src 'self'`, which is how the earlier version of this example
+      failed silently.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'"
+    />
+
+    <link rel="stylesheet" href="./tp-reviews.css" />
+    <link rel="stylesheet" href="./example.css" />
+  </head>
+
+  <body>
+    <h1>What our customers say</h1>
+
+    <!-- The renderer's stylesheet reserves this box's height from `--tp-rows`
+         before the payload arrives, so the footer below does not move. -->
+    <div id="reviews"></div>
+
+    <footer>
+      <p>This footer must not move when the reviews load. That is the CLS test.</p>
+    </footer>
+
+    <script type="module" src="./example.mjs"></script>
+  </body>
+</html>

@@ -30,6 +30,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { checkAssertionFile } from '../src/core/selectors/assertions.mjs';
 import { checkPack } from '../src/core/selectors/loader.mjs';
 
 const ENGINE_VERSION = '1.0.0';
@@ -112,6 +113,18 @@ for (const path of packPaths) {
     versions.add(pack.meta.version);
     packVersions.set(source, versions);
   }
+}
+
+// --- An assertion file must be able to fail (DEL-92). ----------------------
+// An assertion with no bound, or a file with no assertions, passes every canary
+// run — which is the worst possible outcome for a mechanism whose entire job is
+// to notice that something changed.
+for (const path of jsonFilesIn('selectors').filter((entry) => entry.endsWith('assertions.json'))) {
+  const file = parseOrReport(path);
+
+  if (file === null) continue;
+
+  for (const problem of checkAssertionFile(file)) problems.push(`${path}: ${problem}`);
 }
 
 // --- A profile may only pin a pack that exists (TR-SEL-004). ---------------

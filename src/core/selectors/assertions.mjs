@@ -52,7 +52,7 @@ export const ASSERTION_SEVERITIES = Object.freeze(['warn', 'error', 'fatal']);
  * @returns {AssertionResult}
  */
 export function evaluateAssertion(root, assertion) {
-  let matched = 0;
+  let matched;
 
   try {
     matched = queryAll(root, assertion.selector).length;
@@ -138,14 +138,14 @@ export function evaluateAssertions(root, file) {
  * @returns {string[]}
  */
 export function checkAssertionFile(file) {
-  /** @type {string[]} */
-  const problems = [];
   const assertions = file?.assertions;
 
   if (!Array.isArray(assertions) || assertions.length === 0) {
     return ['the assertion file declares no assertions, so it can never fail'];
   }
 
+  /** @type {string[]} */
+  const problems = [];
   const seen = new Set();
 
   for (const assertion of assertions) {
@@ -157,24 +157,39 @@ export function checkAssertionFile(file) {
     if (seen.has(assertion.id)) problems.push(`duplicate assertion id "${assertion.id}"`);
 
     seen.add(assertion.id);
+    problems.push(...checkOneAssertion(assertion));
+  }
 
-    if (typeof assertion.selector !== 'string' || assertion.selector === '') {
-      problems.push(`assertion "${assertion.id}" has no selector`);
-    }
+  return problems;
+}
 
-    if (!ASSERTION_SEVERITIES.includes(assertion.severity)) {
-      problems.push(`assertion "${assertion.id}" has severity "${assertion.severity}"`);
-    }
+/** Shortest notes that could plausibly explain what an assertion protects. */
+const MIN_ASSERTION_NOTES = 20;
 
-    if (assertion.min === undefined && assertion.max === undefined) {
-      // Without a bound there is nothing to violate. This is the failure mode
-      // the whole file exists to avoid: an assertion that cannot fail.
-      problems.push(`assertion "${assertion.id}" declares neither min nor max`);
-    }
+/**
+ * @param {any} assertion
+ * @returns {string[]}
+ */
+function checkOneAssertion(assertion) {
+  /** @type {string[]} */
+  const problems = [];
 
-    if (typeof assertion.notes !== 'string' || assertion.notes.trim().length < 20) {
-      problems.push(`assertion "${assertion.id}" has no usable notes`);
-    }
+  if (typeof assertion.selector !== 'string' || assertion.selector === '') {
+    problems.push(`assertion "${assertion.id}" has no selector`);
+  }
+
+  if (!ASSERTION_SEVERITIES.includes(assertion.severity)) {
+    problems.push(`assertion "${assertion.id}" has severity "${assertion.severity}"`);
+  }
+
+  if (assertion.min === undefined && assertion.max === undefined) {
+    // Without a bound there is nothing to violate. This is the failure mode the
+    // whole file exists to avoid: an assertion that cannot fail.
+    problems.push(`assertion "${assertion.id}" declares neither min nor max`);
+  }
+
+  if (typeof assertion.notes !== 'string' || assertion.notes.trim().length < MIN_ASSERTION_NOTES) {
+    problems.push(`assertion "${assertion.id}" has no usable notes`);
   }
 
   return problems;

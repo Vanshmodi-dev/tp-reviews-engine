@@ -182,6 +182,6 @@ export { COMPLETENESS_VALUES, classifyCompleteness, isComplete } from './validat
 // and exported nothing, which was invisible only because nothing above core/
 // had reason to reach for them yet.
 export { extractReviews } from './extract/index.mjs';
-export { attr, descendants, parseHtml, textOf } from './extract/html.mjs';
+export { attr, checkFixtureShape, descendants, parseHtml, textOf } from './extract/html.mjs';
 export { query, queryAll } from './extract/query.mjs';
 export { classifySignals, detectSignals, hasEmptyState } from './extract/signals.mjs';

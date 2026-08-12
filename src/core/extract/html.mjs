@@ -441,6 +441,42 @@ export function attr(node, name) {
 }
 
 /**
+ * Whether a serialised string is usable as a fixture (SER-02, SER-03).
+ *
+ * The claim SER-03 makes is that a production failure can be reproduced by
+ * saving the serialised subtree into the corpus. That claim is the kind that
+ * silently stops being true — a serialiser that starts including the document,
+ * or a fixture server that injects its own script into the container, both
+ * produce strings that look fine and are not fixtures.
+ *
+ * It lives here rather than beside the serialiser because it is a fact about
+ * extraction's *input*, needs no browser, and is therefore checkable in the
+ * fast suite on every run.
+ *
+ * @param {string} html
+ * @returns {string[]}  Problems; empty means it is fixture-shaped.
+ */
+export function checkFixtureShape(html) {
+  if (html.trim() === '') return ['the serialised subtree is empty'];
+
+  /** @type {string[]} */
+  const problems = [];
+
+  // SER-02, asserted rather than assumed. A document-level element in the
+  // output means the climb reached the document, and the memory
+  // characteristics of a five-thousand-review run change completely.
+  if (/<(?:html|body|head)\b/iu.test(html)) {
+    problems.push('the subtree contains a document-level element; this is a whole-page capture');
+  }
+
+  if (/<script\b/iu.test(html)) {
+    problems.push('the subtree contains a script element, which a sanitised fixture never does');
+  }
+
+  return problems;
+}
+
+/**
  * Every element in the subtree, in document order, excluding `root` itself.
  *
  * @param {HtmlNode} root

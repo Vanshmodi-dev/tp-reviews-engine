@@ -84,33 +84,11 @@ export function serializeSurface(page, surfaceSelector) {
 }
 
 /**
- * Whether a serialised string is usable as a fixture.
+ * Re-exported from `core/`, where the predicate lives.
  *
- * Pure, so the property can be asserted without a browser — and it is asserted,
- * because "this string could be dropped into the corpus" is the claim SER-03
- * actually makes and the one that silently stops being true.
- *
- * @param {string} html
- * @returns {string[]}  Problems; empty means it is fixture-shaped.
+ * "Is this string usable as a fixture" is a fact about extraction's input, not
+ * about the browser — so it is pure, it is unit-tested in the fast suite, and
+ * it stays out of this file. What remains here is one `page.evaluate` callback,
+ * which is only meaningful against a real document.
  */
-export function checkFixtureShape(html) {
-  /** @type {string[]} */
-  const problems = [];
-
-  if (html.trim() === '') {
-    return ['the serialised subtree is empty'];
-  }
-
-  // SER-02, asserted rather than assumed. `<html` or `<body` in the output
-  // means the climb reached the document, and the memory characteristics of
-  // the run change completely.
-  if (/<(?:html|body|head)\b/iu.test(html)) {
-    problems.push('the subtree contains a document-level element; this is a whole-page capture');
-  }
-
-  if (/<script\b/iu.test(html)) {
-    problems.push('the subtree contains a script element, which a sanitised fixture never does');
-  }
-
-  return problems;
-}
+export { checkFixtureShape } from '../../../core/index.mjs';

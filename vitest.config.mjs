@@ -115,6 +115,12 @@ export default defineConfig({
         // pure siblings, both at 100% here. What remains is the browser
         // driving, which only means anything against a real page.
         'src/adapters/acquisition/google-dom/navigator.mjs',
+        // One `page.evaluate` callback, serialised into the browser and never
+        // executed in Node. Its pure half — `checkFixtureShape` — was moved
+        // into core/extract, where it is unit-tested on every run rather than
+        // dragging this file's number down to something that looks like
+        // neglect.
+        'src/adapters/acquisition/google-dom/dom-serialize.mjs',
       ],
 
       // TEST-CFG-01: thresholds are per-path, never a single global number. A

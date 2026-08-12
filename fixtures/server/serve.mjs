@@ -111,8 +111,15 @@ function lazyPage({ slug, batch, stopAfter, advertised, hideSurface }) {
     ? head.replaceAll('role="feed"', 'role="banner"').replaceAll('data-review-list', 'data-nothing')
     : head;
 
-  return `${shell}
-<style>
+  // The machinery goes BEFORE the surface, never inside it.
+  //
+  // The first version injected it just after the shell — which, because the
+  // shell ends *inside* the feed element, put the script into the review
+  // container. Every serialised subtree then carried a `<script>`, so the
+  // string the navigator hands over was not fixture-shaped and would have been
+  // rejected on its way into the corpus (SER-03). The test that caught it is
+  // `checkFixtureShape`.
+  return `<style>
   /* A real scroll container. Without a bounded height the feed never overflows,
      nothing scrolls, and the pagination loop is never actually exercised - the
      fixture would pass while testing nothing. */
@@ -121,7 +128,7 @@ function lazyPage({ slug, batch, stopAfter, advertised, hideSurface }) {
 </style>
 <script id="feed-data" type="application/json">${payload.replaceAll('<', '\\u003c')}</script>
 <script>
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
   const all = JSON.parse(document.getElementById('feed-data').textContent);
   const feed = document.querySelector('[role="feed"]') || document.body;
   const batch = ${batch};
@@ -147,9 +154,9 @@ function lazyPage({ slug, batch, stopAfter, advertised, hideSurface }) {
   feed.addEventListener('scroll', reveal, { passive: true });
   window.addEventListener('scroll', reveal, { passive: true });
   window.__advertisedTotal = ${total};
-})();
+});
 </script>
-${tail}`;
+${shell}${tail}`;
 }
 
 /**

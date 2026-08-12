@@ -38,6 +38,7 @@
 import { classifySignals, detectSignals } from '../../../core/index.mjs';
 
 import { CONSENT_WALL_ERROR, DISMISS_TIMEOUT_MS, classifyConsent } from './consent.mjs';
+import { serializeSurface } from './dom-serialize.mjs';
 import { backoffFor, evaluateStop, quietIterations, scrollStep } from './pagination.mjs';
 
 /** Sort application is non-fatal and gets a short leash (§19.2). */
@@ -56,7 +57,6 @@ const DEFAULT_SCROLL_RATIO = 0.9;
  */
 const GROWING_SETTLE_MS = 250;
 
-/**
 /**
  * The Result shape, written out rather than imported from `core/util/result`.
  *
@@ -153,7 +153,7 @@ export async function navigate(page, options) {
   return {
     ok: true,
     value: {
-      html: await serialiseSurface(page, surface),
+      html: await serializeSurface(page, surface),
       stopReason: pagination.stopReason,
       stopDetail: pagination.stopDetail,
       growthCurve: pagination.growthCurve,
@@ -440,24 +440,6 @@ async function readAdvertisedTotal(page) {
   } catch {
     return null;
   }
-}
-
-/**
- * Serialises the surface subtree only (TR-EXT-011).
- *
- * Never `document.documentElement`: five to twenty times more input for the
- * parser and correspondingly more memory, for markup extraction never reads.
- *
- * @param {any} page
- * @param {string} surface
- * @returns {Promise<string>}
- */
-async function serialiseSurface(page, surface) {
-  return page.evaluate((/** @type {string} */ target) => {
-    const element = /** @type {any} */ (globalThis).document.querySelector(target);
-
-    return element === null ? '' : element.outerHTML;
-  }, surface);
 }
 
 /**

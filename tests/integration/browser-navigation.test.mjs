@@ -8,7 +8,8 @@ import { launchBrowser } from '../../src/adapters/browser/playwright-chromium.mj
 import { navigate } from '../../src/adapters/acquisition/google-dom/navigator.mjs';
 import { resolveBudgets } from '../../src/adapters/browser/timeouts.mjs';
 import { classifyCompleteness } from '../../src/core/validate/completeness.mjs';
-import { extractReviews, parseHtml } from '../../src/core/index.mjs';
+import { extractReviews, parseHtml, queryAll } from '../../src/core/index.mjs';
+import { checkFixtureShape } from '../../src/adapters/acquisition/google-dom/dom-serialize.mjs';
 import { startFixtureServer } from '../../fixtures/server/serve.mjs';
 
 /**
@@ -163,10 +164,14 @@ describe('the happy path — ALG-PAGINATE against a lazy feed', () => {
     expect(extracted.value.reviews[0].author.name).toBe('Priya Sharma');
   });
 
-  it('serialises the surface only, never the whole document (TR-EXT-011)', async () => {
+  it('serialises the surface plus minimal ancestry, never the document', async () => {
+    // SER-03. It starts at `role="main"` rather than `role="feed"` because the
+    // pack's surface strategy is `[role='main'] [role='feed']` — a string
+    // rooted at the feed could not be located by the pack that produced it, and
+    // would land in the corpus looking fine and failing on load.
     const result = await run('/listing/002-single-review');
 
-    expect(result.value.html.startsWith('<div role="feed"')).toBe(true);
+    expect(result.value.html.startsWith('<div role="main"')).toBe(true);
     expect(result.value.html).not.toContain('<html');
   });
 });
@@ -322,5 +327,43 @@ describe('§21.9 and §19.2 — the failure paths', () => {
 
     expect(result.ok).toBe(true);
     expect(result.value.sortApplied).toBe(false);
+  });
+});
+
+describe('DEL-94 / SER-03 — the serialised subtree IS a fixture', () => {
+  it('keeps enough ancestry that the pack can still locate it', async () => {
+    // The surface strategy is `[role='main'] [role='feed']`. Serialising the
+    // feed alone produces a string the pack that produced it cannot locate —
+    // and the file lands in the corpus looking fine and failing on load.
+    const result = await run('/listing/002-single-review');
+    const root = parseHtml(result.value.html);
+
+    expect(queryAll(root, "[role='main'] [role='feed']").length).toBe(1);
+  });
+
+  it('is fixture-shaped: no document element, no script', async () => {
+    const result = await run('/listing/002-single-review');
+
+    expect(checkFixtureShape(result.value.html)).toEqual([]);
+  });
+
+  it('round-trips: the string can be saved and re-extracted offline', async () => {
+    // X-9 — every incident becomes a permanent test — is nearly free for
+    // extraction defects precisely because of this. The diagnostics bundle
+    // contains a string that IS a fixture.
+    const result = await run('/listing/004-owner-replies');
+    const extracted = extract(result.value.html);
+
+    expect(extracted.ok).toBe(true);
+    expect(extracted.value.reviews).toHaveLength(2);
+    // And the reply never became a review — offline, from a string alone.
+    expect(extracted.value.reviews[0].rating).toBe(2);
+  });
+
+  it('never serialises the whole document, even at 120 reviews', async () => {
+    const result = await run('/listing/001-standard-120-reviews?batch=40');
+
+    expect(checkFixtureShape(result.value.html)).toEqual([]);
+    expect(result.value.html).not.toContain('<html');
   });
 });

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tradyperch.dev/schemas/health-record.v1.schema.json",
+  "title": "Health record",
+  "description": "One durable fact per target per run, appended to `health/<slug>.jsonl` on the state branch (EDR-033). Append-only because shards run in parallel and a read-modify-write of one file from two shards loses records silently — appending is the only concurrency-safe operation available without a lock, and there are no locks by design (EDR-035). Every field earns its place by answering a question somebody asks during an incident.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "recorded_at",
+    "run_id",
+    "client_slug",
+    "listing_key",
+    "outcome"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "run_id": { "type": "string", "minLength": 1 },
+
+    "client_slug": { "type": "string", "minLength": 1 },
+    "listing_key": { "type": "string", "minLength": 1 },
+    "adapter": {
+      "type": ["string", "null"],
+      "description": "Which code produced this — the first question asked in any incident."
+    },
+    "pack_version": {
+      "type": ["string", "null"],
+      "description": "Which selector knowledge produced it. Packs are immutable, so this is answerable months later (SEL-01)."
+    },
+    "engine_version": { "type": ["string", "null"] },
+
+    "outcome": {
+      "type": "string",
+      "enum": ["succeeded", "failed", "blocked", "deferred", "skipped"],
+      "description": "A record is written for EVERY outcome (HLTH-02). Writing only failures makes success rate — the primary health metric — uncomputable, because the denominator is gone."
+    },
+    "error_class": { "type": ["string", "null"] },
+
+    "observed_count": { "type": ["integer", "null"], "minimum": 0 },
+    "extracted_count": { "type": ["integer", "null"], "minimum": 0 },
+    "quarantined_count": { "type": ["integer", "null"], "minimum": 0 },
+    "published_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Four counts rather than one: a drop between any adjacent pair localises the loss to a stage."
+    },
+
+    "stop_reason": {
+      "type": ["string", "null"],
+      "enum": [
+        "cap_reached",
+        "target_reached",
+        "exhausted",
+        "stalled",
+        "budget_exhausted",
+        "error",
+        null
+      ],
+      "description": "VAL-01: completeness is derived from THIS, never from the counts above. Both are recorded; only this one is authoritative."
+    },
+    "completeness": {
+      "type": ["string", "null"],
+      "enum": ["full", "full_capped", "partial", "failed", null]
+    },
+    "coverage": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+
+    "duration_ms": { "type": ["integer", "null"], "minimum": 0 },
+    "stage_timings": {
+      "type": ["object", "null"],
+      "additionalProperties": { "type": "number" },
+      "description": "Where the time went — and the input to the shard cost model, which balances by cost rather than by count (TR-CFG-004)."
+    },
+
+    "strategy_histogram": {
+      "type": ["object", "null"],
+      "additionalProperties": { "type": "integer" },
+      "description": "Which strategy index resolved each field. The EARLIEST upstream-change signal there is: a field that has always resolved at index 0 and starts resolving at index 1 says the source changed while the payload is still perfectly correct."
+    },
+
+    "peak_rss_bytes": { "type": ["integer", "null"], "minimum": 0 },
+
+    "gate_decision": {
+      "type": ["string", "null"],
+      "enum": ["ACCEPT", "REJECT", null]
+    },
+    "gate_reasons": { "type": ["array", "null"], "items": { "type": "string" } }
+  }
+}

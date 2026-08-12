@@ -34,42 +34,13 @@ jobs:
         with:
           fetch-depth: 0 # the secret-scan gate walks history
 
+      # Node, npm ci, Chromium, sandbox, and the versions banner — all of it in
+      # the composite action, because TR-CI-004 requires setup logic to exist
+      # exactly once. PH-14 originally inlined the browser steps here; the
+      # moment harvest.yml also needed a browser that became two copies of a
+      # version-sensitive step.
       - name: Setup engine
         uses: ./.github/actions/setup-engine
-
-      # PH-14. The browser suite (TR-BRW-053) launches a real Chromium and
-      # touches no network, so it is NOT in tests/live/ — it blocks a merge. A
-      # leaked context is invisible on a two-target local run and fatal on a
-      # twenty-target production shard, which is exactly the kind of defect that
-      # must not reach main. It runs as its own project, in its own step below.
-      #
-      # Cached on the Playwright version, so the ~190 MB download happens on a
-      # version bump rather than on every run. DEP-5 keeps that bump a
-      # deliberate, never auto-merged pull request.
-      - name: Cache Chromium
-        id: chromium-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      # Ubuntu 24.04 restricts unprivileged user namespaces through AppArmor,
-      # which stops Chromium's sandbox from starting at all.
-      #
-      # Playwright offers two remedies and this takes the one it calls
-      # preferred: configure the environment to SUPPORT sandboxing, rather than
-      # launching with `chromiumSandbox: false`. TRD 16.1 orders it the same way
-      # - "enabled where the runner permits; disable only if the runner requires
-      # it, and record why".
-      #
-      # The runner does not require it. Dropping the sandbox would remove the
-      # process boundary between untrusted page content and the runner on every
-      # CI run, permanently, to save one line here.
-      - name: Allow Chromium's sandbox to start
-        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       # --- 2. lint --------------------------------------------------------
       # LINT-01: warnings are errors. A warning nobody must fix is a rule
@@ -165,41 +136,17 @@ jobs:
           echo "No merged selector pack was modified."
 
       # --- 11. workflow lint ----------------------------------------------
-      # TR-CI-001, TR-CI-002, TR-CI-003 asserted mechanically. The full test
-      # arrives as tests/security/workflow-lint.test.mjs; this inline check
-      # holds the gate meanwhile, because a gate that is added later is a gate
-      # that was absent for exactly the period when the workflows were being
-      # written.
-      - name: Workflow hygiene
-        run: |
-          set -euo pipefail
-          fail=0
-
-          # Anchored on the YAML key, not the bare word: the word appears in
-          # this file's own comments, and a check that flags its own rationale
-          # gets deleted rather than fixed.
-          if grep -rnE "^[[:space:]]*pull_request_target:" .github/workflows/; then
-            echo "::error::TR-CI-003: pull_request_target must not be a workflow trigger."
-            fail=1
-          fi
-
-          for wf in .github/workflows/*.yml; do
-            if ! grep -q "^permissions:" "$wf"; then
-              echo "::error file=$wf::TR-CI-001: no top-level permissions block."
-              fail=1
-            fi
-          done
-
-          # TR-CI-002: third-party actions pinned to a full 40-character commit
-          # SHA, never a tag. A tag is mutable; a compromised upstream can move
-          # it under us without a single byte changing in this repository.
-          if grep -rnE "uses:[[:space:]]+[^./].*@(v[0-9]|main|master)" \
-               .github/workflows/ .github/actions/; then
-            echo "::error::TR-CI-002: pin third-party actions to a full commit SHA."
-            fail=1
-          fi
-
-          exit $fail
+      # DEL-179. This was an inline bash check from PH-00, held as a placeholder
+      # because a gate added later is a gate that was absent for exactly the
+      # period when the workflows were being written.
+      #
+      # It now runs as `tests/security/workflow-lint.test.mjs`, which is the
+      # blocking security suite above — so the rules run LOCALLY too, before a
+      # push rather than after one. The inline copy is gone rather than kept
+      # alongside: two implementations of one rule drift, and the weaker one
+      # becomes the one people trust.
+      - name: Workflow lint
+        run: npx vitest run --project default tests/security/workflow-lint.test.mjs
 
       # --- 12. secret scan ------------------------------------------------
       # CON-17: no secret exists in any file, in any branch, ever. Platform

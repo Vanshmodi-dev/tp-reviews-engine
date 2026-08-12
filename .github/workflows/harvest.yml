@@ -1,0 +1,262 @@
+name: Harvest
+
+# Four crons, one per tier, deliberately offset (§28.3).
+#
+# No two tiers start on the same minute, and the canary (every 3 h, in its own
+# workflow) is offset from all four. A source observing our request rate cannot
+# otherwise distinguish a tier boundary from a canary, which makes our own
+# pacing unreadable to us as well as to them.
+#
+# TR-CI-003: `pull_request_target` appears nowhere. It runs with the base
+# repository's token against a fork's code, which is how a public repository
+# hands a write token to an untrusted pull request.
+on:
+  schedule:
+    - cron: '7 */6 * * *' # premium  — 4/day
+    - cron: '23 1,13 * * *' # standard — 2/day
+    - cron: '41 3 * * *' # economy  — 1/day
+    - cron: '53 5 * * 1' # sweep    — weekly catch-up for anything missed
+  workflow_dispatch:
+    inputs:
+      shards:
+        description: Number of shards to split the due set across.
+        required: false
+        default: '2'
+      dry_run:
+        description: Plan only. Writes nothing, publishes nothing.
+        type: boolean
+        required: false
+        default: false
+
+# TR-CI-001 / IR-20. An explicit top-level block with the minimum set. A
+# workflow without one inherits whatever the repository default happens to be,
+# which is a setting nobody re-reads after the day it was configured.
+#
+# Read-only at the top; the one job that needs to write says so for itself.
+permissions:
+  contents: read
+
+concurrency:
+  # One harvest at a time. Two concurrent runs would both read the same ledger
+  # and both publish, and the second would be reconciling against state the
+  # first had already moved.
+  group: harvest
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------- plan
+  # EDR-029 / SCHED-05: the shard matrix is emitted by a JOB, never hard-coded
+  # in workflow YAML. A literal matrix goes stale the moment a client is added,
+  # and the failure is silent — the new client simply never appears in a shard.
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      due: ${{ steps.plan.outputs.due }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup engine
+        uses: ./.github/actions/setup-engine
+        with:
+          # Planning is pure arithmetic over configuration (TR-APP-030). It has
+          # never needed a browser and pulling one would add ~40 s to the job
+          # that decides whether any work exists at all.
+          browser: 'false'
+
+      - name: Compute the due set and shard matrix
+        id: plan
+        run: |
+          set -euo pipefail
+          shards="${{ github.event.inputs.shards || '2' }}"
+          node bin/tpre.mjs plan --shards "$shards" --json > plan.json
+          due=$(node -e "process.stdout.write(String(JSON.parse(require('node:fs').readFileSync('plan.json','utf8')).total))")
+          matrix=$(node -e "const n=Number('$shards'); process.stdout.write(JSON.stringify({shard: Array.from({length:n},(_,i)=>i)}))")
+          echo "due=$due" >> "$GITHUB_OUTPUT"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+      - name: Report the plan
+        run: |
+          {
+            echo "### Harvest plan"
+            echo ""
+            echo "- due targets: **${{ steps.plan.outputs.due }}**"
+            echo "- shards: \`${{ steps.plan.outputs.matrix }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # -------------------------------------------------------------- harvest
+  harvest:
+    name: Harvest shard ${{ matrix.shard }}
+    needs: plan
+    if: needs.plan.outputs.due != '0' && github.event.inputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      # The only job that writes. It commits to `data` and `state` and touches
+      # nothing else — no issues, no packages, no pages.
+      contents: write
+    strategy:
+      # INV-09. One shard failing must not cancel the others: they are separate
+      # clients, and cancelling them would turn one source's bad morning into
+      # every client going stale.
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - name: Checkout engine
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # CI-03 / TR-CI-022 / IR-10 — rated CRITICAL, and it looks exactly like
+      # an optimisation opportunity, which is why this comment exists.
+      #
+      # The `data` checkout is what the Publish Gate compares against. Without
+      # it, G-03 (count drop), G-04 (rating shift), G-05 (coverage) and G-12
+      # have nothing to compare TO — and they do not fail, they PASS
+      # vacuously. Four gate rules silently disabled, a green run, and a
+      # payload nobody checked.
+      #
+      # Skipping it saves a few seconds. Do not.
+      - name: Checkout data branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: data
+          path: .publish
+
+      - name: Checkout state branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: state
+          path: .state
+
+      - name: Setup engine
+        uses: ./.github/actions/setup-engine
+
+      - name: Harvest
+        id: harvest
+        # The engine classifies its own outcome; the shell must not collapse
+        # that into pass/fail before the classification step sees it.
+        continue-on-error: true
+        env:
+          TPRE_ENV: production
+          TPRE_RUN_ID: ${{ github.run_id }}-${{ matrix.shard }}
+        run: |
+          # `set +e` around the call is load-bearing. GitHub runs `run:` blocks
+          # as `bash -e`, so a non-zero exit aborts the step immediately — and
+          # the `echo` capturing the code would never execute. Every refusal
+          # (5, 6, 7) would then reach the classifier as an empty string and be
+          # treated as a defect, which is the exact inversion EDR-030 forbids.
+          set +e
+          node bin/tpre.mjs harvest \
+            --shard "${{ matrix.shard }}" \
+            --shards "${{ github.event.inputs.shards || '2' }}"
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      # CI-04 / EDR-030. 5, 6 and 7 are CI SUCCESSES with independent alert
+      # severity:
+      #
+      #   5 gate rejected  — the engine correctly refused to publish
+      #   6 policy blocked — a kill switch or breaker did its job
+      #   7 challenge      — the source said stop and we stopped
+      #
+      # Failing the job for these trains the maintainer to ignore red builds,
+      # and a red badge that means "working as designed" is worse than no badge
+      # at all: the next genuinely broken build looks identical.
+      - name: Classify the exit code
+        run: |
+          set -euo pipefail
+          code="${{ steps.harvest.outputs.code }}"
+          case "$code" in
+            0) echo "::notice::shard ${{ matrix.shard }}: published" ;;
+            4) echo "::warning::shard ${{ matrix.shard }}: partial — some targets failed or were deferred" ;;
+            5) echo "::warning::shard ${{ matrix.shard }}: gate rejected — the engine refused to publish" ;;
+            6) echo "::warning::shard ${{ matrix.shard }}: policy blocked" ;;
+            7) echo "::warning::shard ${{ matrix.shard }}: challenge — terminal, no retry (INV-07)" ;;
+            *) echo "::error::shard ${{ matrix.shard }}: exit $code is a defect, not a refusal"; exit 1 ;;
+          esac
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: diagnostics-shard-${{ matrix.shard }}
+          path: |
+            .artifacts/
+            plan.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # -------------------------------------------------------------- collect
+  collect:
+    name: Collect
+    needs: [plan, harvest]
+    if: always() && needs.plan.outputs.due != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download every shard's diagnostics
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: .collected
+          pattern: diagnostics-shard-*
+          merge-multiple: true
+
+      - name: Summarise the run
+        run: |
+          # `strategy` is not in scope here — this job has no matrix, and
+          # referencing it would be an invalid expression rather than an empty
+          # one. The shard count comes from the plan output, which is where it
+          # was decided.
+          {
+            echo "### Harvest summary"
+            echo ""
+            echo "- run: \`${{ github.run_id }}\`"
+            echo "- due targets: **${{ needs.plan.outputs.due }}**"
+            echo "- shard matrix: \`${{ needs.plan.outputs.matrix }}\`"
+            echo "- shard conclusion: \`${{ needs.harvest.result }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------- alert
+  alert:
+    name: Alert
+    needs: [plan, harvest]
+    if: always() && needs.harvest.result == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # TR-CI-130 — a DELIBERATE absence, and the reason is structural rather
+    # than cautious.
+    #
+    # This job runs when something has already gone wrong. Giving it `contents`
+    # would mean the code path that reacts to a broken run can also write to
+    # `data` — so a bug in alerting could corrupt published reviews. Without the
+    # permission that is not unlikely, it is impossible.
+    permissions:
+      issues: write
+    steps:
+      - name: Raise an incident
+        uses: actions/github-script@10b53a9ec6c222bb4ce97aa6bd2b5f739696b536 # v7
+        with:
+          script: |
+            const title = `Harvest failure — run ${context.runId}`;
+            const body = [
+              'A harvest shard exited with a code that is a defect rather than a refusal.',
+              '',
+              `- run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '- exit codes 5, 6 and 7 are refusals and do NOT reach this job.',
+              '',
+              'Runbook: docs/runbooks/',
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['incident', 'harvest'],
+            });

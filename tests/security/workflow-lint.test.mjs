@@ -36,13 +36,248 @@ function usesLines(source) {
     .filter((line) => line.startsWith('uses:'));
 }
 
-describe('the workflow set is non-empty', () => {
+/**
+ * The catalogue of §48.2, listed rather than globbed.
+ *
+ * Globbing would let a DELETED workflow pass silently — every remaining file
+ * would still satisfy every rule, and the suite would go green over a
+ * repository that had stopped harvesting. Naming them makes removal a failure.
+ */
+const CATALOGUE = [
+  'ci.yml',
+  'harvest.yml',
+  'validate-config.yml',
+  'canary.yml',
+  'pages.yml',
+  'keepalive.yml',
+  'release.yml',
+  'dependency-audit.yml',
+];
+
+/**
+ * @param {string} name
+ * @returns {string}
+ */
+function sourceOf(name) {
+  const found = files.find((file) => file.name === name);
+
+  if (found === undefined) throw new Error(`workflow ${name} is missing`);
+
+  return found.source;
+}
+
+describe('§48.2 — the eight workflows', () => {
+  it('ships exactly the catalogue, no more and no fewer', () => {
+    expect(files.map((file) => file.name).sort()).toEqual([...CATALOGUE].sort());
+  });
+
   it('finds workflows to check, so the suite is not vacuous', () => {
     // A rename of the directory would otherwise turn every assertion below into
     // a pass over an empty list.
     expect(files.length).toBeGreaterThanOrEqual(2);
     expect(files.map((file) => file.name)).toContain('harvest.yml');
   });
+});
+
+describe('TR-CI-130 / TR-CI-131 — the two deliberate permission absences', () => {
+  it('gives the harvest alert job no contents permission', () => {
+    // It raises incidents. An incident reporter that could write to the
+    // repository could, in the middle of an incident, make it worse.
+    const alert = /alert:[\s\S]*?permissions:\s*\n((?:\s+\w[^\n]*\n)+)/u.exec(
+      sourceOf('harvest.yml'),
+    );
+
+    expect(alert).not.toBeNull();
+    expect(/** @type {any} */ (alert)[1]).toContain('issues: write');
+    expect(/** @type {any} */ (alert)[1]).not.toContain('contents:');
+  });
+
+  it('gives the pages deploy job no contents permission', () => {
+    const pages = sourceOf('pages.yml');
+    const deploy = /deploy:[\s\S]*?permissions:\s*\n((?:\s+[\w#][^\n]*\n)+)/u.exec(pages);
+
+    expect(deploy).not.toBeNull();
+
+    const declared = /** @type {any} */ (deploy)[1];
+
+    // The job that publishes to the public internet cannot write to the
+    // repository. There is no code path from "the deploy went wrong" to "the
+    // payloads are gone".
+    expect(declared).toContain('pages: write');
+    expect(declared).toContain('id-token: write');
+    expect(declared).not.toMatch(/^\s*contents:/mu);
+  });
+});
+
+describe('canary.yml — the workflow that must never publish (TR-CI-150)', () => {
+  const canary = sourceOf('canary.yml');
+
+  it('never checks out the data branch', () => {
+    // The structural half of the guarantee. Without a `data` working tree the
+    // publisher has nowhere to write, so "the canary published" is not a bug
+    // that can happen — it does not depend on a flag staying correct.
+    expect(canary).not.toMatch(/ref:\s*data/u);
+  });
+
+  it('does not claim a --dry-run flag that does not exist', () => {
+    // Publication happens inside the eleven stages, and stage 1 (C-08) has no
+    // implementation, so a flag to suppress publication would suppress nothing
+    // while reading as a guarantee. The structural absence above is the real
+    // one; this asserts we did not paper over it with a flag as well.
+    expect(canary).not.toMatch(/^\s*node bin\/tpre\.mjs.*--dry-run/mu);
+  });
+
+  it('states in the file why the data checkout is absent', () => {
+    // The mirror of CI-03. In harvest.yml the data checkout looks like an
+    // optimisation to remove; here its ABSENCE looks like an oversight to fix.
+    // Both need the reason written down next to them.
+    expect(canary).toMatch(/DELIBERATELY ABSENT/u);
+  });
+
+  it('is offset from every harvest cron', () => {
+    const minuteOf = (/** @type {string} */ source) =>
+      [...source.matchAll(/cron:\s*'(\d+)\s/gu)].map((match) => match[1]);
+
+    const harvestMinutes = minuteOf(sourceOf('harvest.yml'));
+    const canaryMinutes = minuteOf(canary);
+
+    expect(canaryMinutes.length).toBeGreaterThan(0);
+
+    for (const minute of canaryMinutes) {
+      expect(harvestMinutes).not.toContain(minute);
+    }
+  });
+});
+
+describe('keepalive.yml — both halves (§48.3, TR-CI-110)', () => {
+  const keepalive = sourceOf('keepalive.yml');
+
+  it('PREVENTS dormancy by producing activity', () => {
+    expect(keepalive).toMatch(/keepalive\.txt/u);
+    expect(keepalive).toMatch(/git push origin state/u);
+  });
+
+  it('DETECTS dormancy by asking whether the schedule is enabled', () => {
+    // The half that catches RISK-17. Producing activity is a hope; asking the
+    // API whether harvest is still active is a check. Without this, every
+    // client goes stale in silence and the first symptom is a client asking
+    // why their reviews stopped months ago.
+    expect(keepalive).toMatch(/listRepoWorkflows/u);
+    expect(keepalive).toMatch(/harvest\.yml/u);
+    expect(keepalive).toMatch(/setFailed/u);
+  });
+
+  it('runs comfortably inside the 60-day disable window', () => {
+    // Monthly. A single missed run must not be able to spend the whole cushion.
+    expect(keepalive).toMatch(/cron:\s*'[^']*\d+ \* \*'/u);
+  });
+});
+
+describe('release.yml — re-verification, not a rubber stamp', () => {
+  const release = sourceOf('release.yml');
+
+  it('re-runs the full gate at the tag', () => {
+    // ci.yml ran against a PR merge commit, which is a different tree whenever
+    // anything else landed in between.
+    for (const step of ['npm run lint', 'npm run typecheck', 'npm test', 'npm run test:browser']) {
+      expect(release).toContain(step);
+    }
+  });
+
+  it('checks the renderer size budget before the tag ships', () => {
+    expect(release).toContain('npm run size');
+  });
+
+  it('refuses a tag that disagrees with ENGINE_VERSION', () => {
+    // The version is stamped into every payload's provenance block. A mismatch
+    // makes "which engine produced this?" unanswerable from the data.
+    expect(release).toContain('ENGINE_VERSION');
+  });
+
+  it('publishes only after verification passes', () => {
+    expect(release).toMatch(/release:[\s\S]*?needs:\s*verify/u);
+  });
+});
+
+describe('dependency-audit.yml — the one-dependency posture', () => {
+  const audit = sourceOf('dependency-audit.yml');
+
+  it('fails if the production dependency count grows beyond one', () => {
+    expect(audit).toMatch(/count.*-gt 1|DEP-1/u);
+  });
+
+  it('does not fail the run for merely-outdated packages', () => {
+    // `npm outdated` exits non-zero almost always. A permanently red workflow
+    // is one nobody reads, which costs more than the signal is worth.
+    expect(audit).toMatch(/npm outdated \|\| true/u);
+  });
+});
+
+describe('every workflow invokes the CLI with flags the CLI actually defines', () => {
+  /**
+   * The flags each command accepts, read from the CLI itself rather than
+   * restated here — a copy would drift and then agree with the workflow while
+   * both disagreed with the code.
+   *
+   * @returns {Promise<Map<string, Set<string>>>}
+   */
+  async function commandFlags() {
+    const { buildCommands } = await import('../../src/cli/composition.mjs');
+    // Global flags apply to every command (`GLOBAL_OPTIONS` in cli/index.mjs).
+    const global = ['help', 'version', 'output', 'log-level'];
+    const table = new Map();
+
+    for (const command of buildCommands({ env: {}, redactor: { secretCount: 0 } })) {
+      table.set(command.name, new Set([...global, ...Object.keys(command.options ?? {})]));
+    }
+
+    return table;
+  }
+
+  /**
+   * @param {RegExpMatchArray} match
+   * @param {string} file
+   * @returns {{ file: string, command: string, flags: string[] }}
+   */
+  const toInvocation = (match, file) => ({
+    file,
+    command: match[1] ?? '',
+    flags: [...(match[2] ?? '').matchAll(/--([a-z-]+)/gu)].map((flag) => flag[1] ?? ''),
+  });
+
+  /** Every `node bin/tpre.mjs …` line in every workflow, with its flags. */
+  const invocations = files.flatMap(({ name, source }) =>
+    [...source.matchAll(/node bin\/tpre\.mjs\s+([a-z-]+)((?:\s+[^\n|>]*)?)/gu)].map((match) =>
+      toInvocation(match, name),
+    ),
+  );
+
+  it('finds invocations to check, so the assertion is not vacuous', () => {
+    expect(invocations.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it.each(invocations.map((call) => [`${call.file}: tpre ${call.command}`, call]))(
+    '%s',
+    async (_label, call) => {
+      // This is the guard that was missing. `harvest.yml` shipped in PH-19
+      // calling `plan --json`; `--json` is not a defined flag, `parseArgs` runs
+      // with `strict: true`, so it exited 2 — a usage error, classified as a
+      // genuine failure — on every scheduled run. Nothing caught it, because
+      // workflow-lint checked the TEXT of workflows and never asked whether the
+      // commands inside them were real.
+      const table = await commandFlags();
+      const known = table.get(call.command);
+
+      expect(known, `unknown command: ${call.command}`).toBeDefined();
+
+      for (const flag of call.flags) {
+        expect(
+          /** @type {Set<string>} */ (known).has(flag),
+          `tpre ${call.command} has no --${flag}`,
+        ).toBe(true);
+      }
+    },
+  );
 });
 
 describe('TR-CI-001 / IR-20 — every workflow declares its permissions', () => {
@@ -59,11 +294,17 @@ describe('TR-CI-001 / IR-20 — every workflow declares its permissions', () => 
   it.each(files.map((file) => [file.name, file.source]))(
     '%s starts from contents: read or narrower',
     (_n, source) => {
+      // `permissions: {}` is the STRICTEST declaration there is — no scopes at
+      // all, every job forced to state its own. Reading only the block form
+      // rejected it as if it were a missing declaration, which would have
+      // pushed pages.yml towards a weaker top-level grant to satisfy the
+      // linter. A guard that penalises the safest option is worse than none.
+      const empty = /^permissions:\s*\{\s*\}\s*$/mu.test(source);
       const block = /^permissions:\s*\n((?:\s+.+\n)+)/mu.exec(source);
 
-      expect(block, 'no top-level permissions block').not.toBeNull();
+      expect(empty || block !== null, 'no top-level permissions declaration').toBe(true);
 
-      const declared = /** @type {any} */ (block)[1];
+      const declared = empty ? '' : /** @type {any} */ (block)[1];
 
       // `write-all` is the shape that makes every other control decorative.
       expect(declared).not.toMatch(/write-all/u);

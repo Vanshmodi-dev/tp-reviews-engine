@@ -1,0 +1,248 @@
+/**
+ * TP Reviews base stylesheet (DEL-188, §50).
+ *
+ * Deliberately unopinionated. This ships to sites with their own design
+ * systems, so it sets structure and leaves appearance to custom properties: a
+ * stylesheet that imposed a font stack and a brand colour would be overridden
+ * on every site that uses it, and the overriding would be done with `!important`
+ * against selectors we might later change.
+ *
+ * Every colour, radius and space below is a `var()` with a neutral fallback.
+ * A client restyles by setting the properties on any ancestor.
+ *
+ * ## Layout stability lives here, not in the renderer
+ *
+ * `.tp-reviews` reserves its height from `--tp-rows` before the payload is
+ * fetched, so arriving reviews do not push the page down (CLS 0).
+ *
+ * This was originally an inline `style.minHeight` written by the renderer,
+ * which a `style-src 'self'` policy blocks — CSSOM writes included. On exactly
+ * the security-conscious sites most likely to deploy this, the reservation
+ * silently did nothing and the page shifted. Doing it in a stylesheet is the
+ * only form that survives a strict CSP.
+ *
+ * **`--tp-rows` must match the `pageSize` passed to the renderer.** It defaults
+ * to 10, which is the renderer's `DEFAULT_PAGE_SIZE`. If you pass a different
+ * `pageSize`, set this too or the reservation is the wrong size — the one
+ * coupling this file cannot check for you.
+ */
+
+.tp-reviews {
+  --tp-row-height: 11em;
+  --tp-rows: 10;
+  /* The summary line above the list, the status line and the pagination below
+     it, and the margins between all three. Part of the reservation because
+     they are part of what appears when the payload lands: reserving only the
+     rows leaves the page short by exactly this much and shifts by it.
+
+     Measured at 131px against a 16px root, then rounded up. Reserving slightly
+     MORE than the content needs costs a few pixels of gap; reserving less
+     costs a layout shift, so the rounding goes up. */
+  --tp-chrome-height: 9em;
+
+  min-height: calc(var(--tp-rows) * var(--tp-row-height) + var(--tp-chrome-height));
+  --tp-text: var(--tp-color-text, #1a1a1a);
+  --tp-muted: var(--tp-color-muted, #666);
+  --tp-line: var(--tp-color-line, #e0e0e0);
+  --tp-star: var(--tp-color-star, #f5a623);
+  --tp-star-empty: var(--tp-color-star-empty, #d8d8d8);
+  --tp-gap: var(--tp-space, 1rem);
+  --tp-radius: var(--tp-corner, 6px);
+
+  color: var(--tp-text);
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------ summary */
+
+.tp-reviews__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: var(--tp-gap);
+}
+
+.tp-reviews__mean {
+  font-weight: 600;
+}
+
+.tp-reviews__count {
+  color: var(--tp-muted);
+}
+
+/* -------------------------------------------------------------------- stars */
+
+.tp-reviews__stars {
+  display: inline-flex;
+  gap: 0.1em;
+}
+
+.tp-reviews__star {
+  width: 1em;
+  height: 1em;
+  background: var(--tp-star-empty);
+  /* A CSS-drawn star: no image request, no icon font, no third-party origin
+     (INV-01). The renderer makes exactly one request and this must not add a
+     second. */
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+}
+
+.tp-reviews__star--filled {
+  background: var(--tp-star);
+}
+
+/* --------------------------------------------------------------------- list */
+
+.tp-reviews__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tp-reviews__review {
+  border-bottom: 1px solid var(--tp-line);
+  padding: var(--tp-gap) 0;
+  /* FIXED, not min-height. A row whose height varies with its content makes
+     the container's reservation a guess, and a guess that is ever too small is
+     the layout shift this all exists to prevent. Fixed rows plus clamped text
+     make "rows x row-height" an exact prediction rather than an estimate.
+     Content beyond the clamp is hidden; the payload already carries a
+     "text_truncated" flag, so truncation is a concept this domain has. */
+  height: var(--tp-row-height);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.tp-reviews__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+
+.tp-reviews__author {
+  font-weight: 600;
+}
+
+.tp-reviews__date,
+.tp-reviews__status {
+  color: var(--tp-muted);
+  font-size: 0.875em;
+}
+
+.tp-reviews__text {
+  margin: 0.5em 0 0;
+  /* `anywhere` rather than a fixed truncation: review text arrives in any
+     language and a long unbroken token (a URL, a German compound) would
+     otherwise widen the container and break the host page's layout. */
+  overflow-wrap: anywhere;
+
+  /* Bounded height, which is what makes the reservation above honest. Review
+     text is unbounded in principle — a 2,000-character review exists and will
+     eventually arrive — and an unbounded row makes `--tp-row-height` a guess
+     that is sometimes too small, which is precisely the layout shift the
+     reservation exists to prevent.
+
+     Clamping also protects the host page from one long review dominating a
+     section that is not the point of their page. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+/* -------------------------------------------------------------------- reply */
+
+.tp-reviews__reply {
+  margin: 0.75em 0 0 var(--tp-gap);
+  padding: 0.75em;
+  border-left: 3px solid var(--tp-line);
+  border-radius: var(--tp-radius);
+  background: var(--tp-color-reply-bg, rgb(0 0 0 / 3%));
+}
+
+.tp-reviews__reply-label {
+  font-size: 0.8125em;
+  font-weight: 600;
+  color: var(--tp-muted);
+}
+
+.tp-reviews__reply-text {
+  margin: 0.25em 0 0;
+  overflow-wrap: anywhere;
+
+  /* Same reasoning as the review body, tighter bound: an owner reply is a
+     secondary voice and should never be the tallest thing in a row. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------- pagination */
+
+.tp-reviews__pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25em;
+  margin-top: var(--tp-gap);
+}
+
+.tp-reviews__page {
+  min-width: 2.5em;
+  min-height: 2.5em;
+  border: 1px solid var(--tp-line);
+  border-radius: var(--tp-radius);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tp-reviews__page[aria-current='true'] {
+  border-color: currentcolor;
+  font-weight: 700;
+}
+
+/* Never removed, only restyled. A focus ring is how a keyboard user knows
+   where they are, and `outline: none` on a paginated list is how that user
+   loses the page entirely. */
+.tp-reviews__page:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------- empty state */
+
+.tp-reviews.tp-reviews--empty {
+  /* The reservation is released once we know there is nothing to show, so an
+     empty widget is not a tall blank gap.
+
+     Both classes, deliberately. `.tp-reviews--empty` alone is (0,1,0) — the
+     same weight as the `.tp-reviews { --tp-rows: 3 }` a client writes to match
+     their `pageSize` — so it loses on source order to any stylesheet loaded
+     after this one, and the empty state renders as a tall blank box. Doubling
+     the selector wins on specificity without `!important`, which would in turn
+     be unbeatable by a client restyling their own page. */
+  --tp-rows: 0;
+  --tp-chrome-height: 0em;
+}
+
+.tp-reviews__empty {
+  color: var(--tp-muted);
+  margin: 0;
+}

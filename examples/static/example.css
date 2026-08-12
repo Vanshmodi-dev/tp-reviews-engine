@@ -1,0 +1,29 @@
+/**
+ * The example page's own styling — the "client's site", not the renderer.
+ *
+ * External rather than a `<style>` block for the same reason example.mjs is
+ * external: `style-src 'self'` blocks inline style, and widening the policy to
+ * `'unsafe-inline'` so a reviews widget can render is a bad trade to ask a
+ * client to make.
+ */
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  margin: 0 auto;
+  max-width: 42rem;
+  padding: 2rem 1rem;
+}
+
+/* Theming done the intended way: set the custom properties, do not override
+   the renderer's selectors. */
+.tp-reviews {
+  --tp-color-star: #b8860b;
+  --tp-corner: 4px;
+
+  /* Matches `pageSize: 3` in example.mjs. These two are one decision written
+     in two places, because CSS cannot read a JavaScript argument. */
+  --tp-rows: 3;
+}

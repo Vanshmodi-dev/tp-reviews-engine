@@ -36,7 +36,15 @@
 
     // Matching the Node major pinned in .nvmrc.
     "target": "ES2023",
-    "lib": ["ES2023"],
+    // DOM arrives with PH-23. `frontend/renderer/` runs in a page, not in Node,
+    // and without it every `Element` and `document` in the renderer is an
+    // error — which would mean either excluding the one file that executes on
+    // machines we do not control, or typing it as `any`.
+    //
+    // This does NOT open the DOM to `src/`. ESLint gives `src/**` only
+    // `globals.node`, so `document` there is still `no-undef`, and the layering
+    // tests still forbid the imports. Two mechanisms, as everywhere else.
+    "lib": ["ES2023", "DOM"],
 
     // jsconfig.json defaults maxNodeModuleJsDepth to 2, which combines with
     // checkJs to type-check untyped JavaScript inside node_modules. Those

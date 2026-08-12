@@ -475,6 +475,28 @@ export default [
     },
   },
 
+  // ------------------------------------------------ group 8b: browser examples
+  {
+    // Integration code that runs in a page, not in Node. Same globals as
+    // `frontend/`, but NOT the same restrictions: this is a client's code, and
+    // the point of an example is to show what a client actually writes.
+    files: ['examples/static/example.mjs'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+
+  // ----------------------------------------- group 8c: framework config files
+  {
+    // Next.js resolves its config by default export. There is no named-export
+    // form of it — the shape of this file is dictated by an external framework
+    // rather than chosen by us, so TRD 67.2 (which exists so OUR modules stay
+    // greppable) has nothing to bite on here.
+    //
+    // Scoped to the single file, deliberately. A directory-wide exemption would
+    // quietly cover the example's own source, where the rule does apply.
+    files: ['examples/nextjs/next.config.mjs'],
+    rules: { 'no-restricted-syntax': 'off' },
+  },
+
   // -------------------------------------------------------- group 9: tests
   {
     files: ['tests/**/*.mjs'],

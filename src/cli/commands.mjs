@@ -10,7 +10,9 @@
 
 import { loadConfig } from '../app/config/index.mjs';
 import { blocks, validateSemantics } from '../app/config/semantic.mjs';
+import { missingOutcomes, runShard } from '../app/orchestrator.mjs';
 import { byPriority, computeTargets } from '../app/registry.mjs';
+import { buildManifest } from '../app/run-manifest.mjs';
 import { planShards } from '../app/shard-planner.mjs';
 import { EXIT } from './exit-codes.mjs';
 
@@ -268,6 +270,136 @@ async function realTargets(deps, health) {
  */
 async function legacyTargets(deps) {
   return (await deps.dueSet?.()) ?? [];
+}
+
+/**
+ * `tpre harvest` — run one shard's due targets and report an exit code.
+ *
+ * ## The shell, with the stages injected
+ *
+ * This command owns the loop, the shard slice, the manifest, and the exit code.
+ * It does **not** own the eleven stages: `deps.runStages` supplies those, and
+ * the composition root decides which adapter fills them (DR-5, EDR-001).
+ *
+ * That split is what lets the exit-code classification exist and be tested
+ * before every stage does. The Listing Resolver (C-08) has no implementation
+ * yet, so a DOM target cannot complete end to end today — and the honest
+ * consequence is a target that FAILS with a stated reason, not a run that
+ * reports success over a pipeline with a hole in it.
+ *
+ * ## Why the exit code is not just pass/fail
+ *
+ * EDR-030. Codes 5, 6 and 7 are refusals, not defects:
+ *
+ * - **5** the Gate rejected the payload — the engine worked
+ * - **6** policy blocked the target — a kill switch or breaker did its job
+ * - **7** a challenge was detected — the source said stop and we stopped
+ *
+ * A workflow that failed the job for these would train the maintainer to
+ * ignore red builds, and the next genuinely broken run looks identical.
+ *
+ * @param {any} deps
+ * @returns {any}
+ */
+export function harvestCommand(deps) {
+  return {
+    name: 'harvest',
+    summary: 'Run the due targets for one shard and publish what the Gate accepts.',
+    options: { shard: { type: 'string' }, shards: { type: 'string' } },
+    async run(/** @type {any} */ { flags }) {
+      const shards = Number(flags.shards ?? 1);
+      const index = Number(flags.shard ?? 0);
+      const health = (await deps.health?.()) ?? {};
+      const plan = planShards(await dueSetFor(deps, health), shards, health);
+      const mine = plan.shards[index]?.targets ?? [];
+      const run = await runShard(mine, shardContext(deps));
+      const manifest = buildManifest({
+        runId: deps.runId,
+        generatedAt: new Date((deps.now ?? Date.now)()).toISOString(),
+        run,
+        planned: mine,
+        shardPlan: plan,
+        engine: deps.engine ?? null,
+      });
+
+      // TR-APP-006, asserted rather than assumed: a run that quietly dropped a
+      // target produces a manifest that looks complete and a client whose site
+      // silently stops updating.
+      const missing = missingOutcomes(mine, run.outcomes);
+
+      await deps.writeManifest?.(manifest);
+
+      return {
+        code: exitForRun(run.outcomes, missing),
+        output: { shard: { index, of: shards }, manifest },
+      };
+    },
+  };
+}
+
+/**
+ * The orchestrator's context, assembled from what the composition root wired.
+ *
+ * @param {any} deps
+ * @returns {any}
+ */
+function shardContext(deps) {
+  return {
+    runId: deps.runId,
+    now: deps.now ?? (() => Date.now()),
+    stages: deps.runStages,
+    ...(deps.gate === undefined ? {} : { gate: deps.gate }),
+    ...(deps.budgets ?? {}),
+  };
+}
+
+/**
+ * The due set, in priority order.
+ *
+ * Shared by `plan` and `harvest` so the two cannot disagree. A harvest that
+ * computed its own due set differently from the plan would run targets the
+ * operator was never shown.
+ *
+ * @param {any} deps
+ * @param {Record<string, any>} health
+ * @returns {Promise<any[]>}
+ */
+async function dueSetFor(deps, health) {
+  const targets = computeTargets({
+    clients: await deps.clients(),
+    now: (await deps.now?.()) ?? Date.now(),
+    health,
+  });
+
+  return byPriority(targets).filter((target) => target.due);
+}
+
+/**
+ * Classifies a whole run (EDR-030).
+ *
+ * Refusals outrank successes and defects outrank refusals: a run containing one
+ * genuine failure is a defect regardless of how many targets the Gate
+ * separately refused, because the failure is the thing somebody must look at.
+ *
+ * @param {ReadonlyArray<any>} outcomes
+ * @param {ReadonlyArray<string>} missing
+ * @returns {number}
+ */
+export function exitForRun(outcomes, missing = []) {
+  if (missing.length > 0) return EXIT.INTERNAL;
+
+  const failed = outcomes.filter((outcome) => outcome.state === 'failed');
+  const blocked = outcomes.filter((outcome) => outcome.state === 'blocked');
+  const deferred = outcomes.filter((outcome) => outcome.state === 'deferred');
+
+  if (failed.length > 0) return exitFor(outcomes.length, failed.length);
+  if (blocked.some((outcome) => outcome.code === 'ERR-BLOCKED-CHALLENGE')) return EXIT.CHALLENGE;
+  if (blocked.length > 0) return EXIT.POLICY_BLOCKED;
+  if (outcomes.some((outcome) => outcome.code === 'ERR-GATE-REJECTED')) return EXIT.GATE_REJECTED;
+
+  // Deferred targets are a scheduling fact, not a failure — but the run did not
+  // finish its plan, and code 4 is the honest description of that.
+  return deferred.length > 0 ? EXIT.PARTIAL : EXIT.OK;
 }
 
 /**

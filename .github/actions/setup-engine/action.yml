@@ -9,6 +9,12 @@ inputs:
     description: Run `npm ci`. Set false for jobs that only need Node present.
     required: false
     default: 'true'
+  browser:
+    description: >-
+      Install and cache Chromium. Set false for jobs that never launch a
+      browser - a ~190 MB download nobody uses is forty seconds per job.
+    required: false
+    default: 'true'
 
 runs:
   using: composite
@@ -30,13 +36,48 @@ runs:
       shell: bash
       run: npm ci
 
-    # The banner is how a "works locally, fails in CI" report gets diagnosed in
-    # one look at the log rather than three round trips.
+    # CI-01 / TR-CI-004. Browser setup lives HERE, not in a workflow.
     #
-    # Browser setup is deliberately absent until PH-14 (DEP-ORD-01). Pulling a
-    # 350 MB browser cache for nine weeks, for code that does not exist, costs
-    # roughly forty minutes of CI time per week and hides the true cold-start
-    # cost at the moment it finally needs measuring.
+    # PH-14 put it inline in ci.yml because ci.yml was the only consumer. The
+    # moment harvest.yml also needed a browser that became two copies of a
+    # version-sensitive step - and TR-CI-004 exists precisely so a browser bump
+    # is a one-file edit rather than a hunt across eight workflows.
+    #
+    # Keyed on the lockfile, so the ~190 MB download happens on a version bump
+    # rather than on every run. DEP-5 keeps that bump a deliberate, never
+    # auto-merged pull request.
+    - name: Cache Chromium
+      if: inputs.browser == 'true'
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+    - name: Install Chromium
+      if: inputs.browser == 'true'
+      shell: bash
+      run: npx playwright install --with-deps chromium
+
+    # Ubuntu 24.04 restricts unprivileged user namespaces through AppArmor,
+    # which stops Chromium's sandbox from starting at all.
+    #
+    # Playwright offers two remedies and this takes the one it calls preferred:
+    # configure the environment to SUPPORT sandboxing, rather than launching
+    # with `chromiumSandbox: false`. TRD 16.1 orders it the same way - "enabled
+    # where the runner permits; disable only if the runner requires it".
+    #
+    # The runner does not require it. Dropping the sandbox would remove the
+    # process boundary between untrusted page content and the runner on every
+    # run, permanently, to save one line here.
+    - name: Allow Chromium's sandbox to start
+      if: inputs.browser == 'true'
+      shell: bash
+      run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+    # CI-02 / TR-CI-140. The banner is how a "works locally, fails in CI"
+    # report gets diagnosed in one look at the log rather than three round
+    # trips - and it is what makes "which browser version produced this
+    # payload?" answerable from the log alone, months later.
     - name: Versions banner
       shell: bash
       run: |
@@ -50,4 +91,9 @@ runs:
           echo "| npm | \`$(npm --version)\` |"
           echo "| git | \`$(git --version)\` |"
           echo "| runner | \`${RUNNER_OS}\` \`$(nproc) cores\` |"
+          if [ "${{ inputs.browser }}" = "true" ]; then
+            echo "| playwright | \`$(npx playwright --version 2>/dev/null || echo unavailable)\` |"
+          else
+            echo "| playwright | _not installed for this job_ |"
+          fi
         } >> "$GITHUB_STEP_SUMMARY"

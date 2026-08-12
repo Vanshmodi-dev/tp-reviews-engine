@@ -43,7 +43,13 @@ import { createLogger } from '../infra/logger/jsonl.mjs';
 import { createRedactor } from '../infra/logger/redact.mjs';
 import { createSystemRandom } from '../infra/random.mjs';
 import { createRetryPolicy } from '../infra/retry/policy.mjs';
-import { doctorCommand, planCommand, projectCommand, validateConfigCommand } from './commands.mjs';
+import {
+  doctorCommand,
+  harvestCommand,
+  planCommand,
+  projectCommand,
+  validateConfigCommand,
+} from './commands.mjs';
 import { createCli, runAndExit } from './index.mjs';
 
 /** The engine version, reported by `--version` and stamped into provenance. */
@@ -153,8 +159,71 @@ export function buildCommands(deps) {
       project: deps.project ?? (() => ({ files: {} })),
       resolveTargets: deps.resolveTargets ?? (async () => []),
     }),
-    planCommand({ dueSet: deps.dueSet ?? (async () => []) }),
+    planCommand(
+      // `clients` is the PH-17 path — real configs through the pure registry.
+      // `dueSet` is the pre-PH-17 shape, kept so a caller supplying only that
+      // still works rather than silently planning nothing.
+      defined({
+        clients: deps.clients,
+        health: deps.health,
+        now: deps.now,
+        dueSet: deps.dueSet ?? (async () => []),
+      }),
+    ),
+    harvestCommand(
+      defined({
+        runId: deps.runId ?? 'local',
+        clients: deps.clients ?? (async () => []),
+        health: deps.health ?? (async () => ({})),
+        // The eleven stages arrive from here, not from the command. The Listing
+        // Resolver (C-08) has no implementation yet, so the default reports
+        // that honestly rather than letting a target look successful over a
+        // pipeline with a hole in it.
+        runStages: deps.runStages ?? notImplemented,
+        gate: deps.gate,
+        now: deps.now,
+        budgets: deps.budgets,
+        writeManifest: deps.writeManifest,
+        engine: deps.engine,
+      }),
+    ),
   ];
+}
+
+/**
+ * Drops keys whose value is `undefined`.
+ *
+ * `exactOptionalPropertyTypes` distinguishes "absent" from "present and
+ * undefined", so passing an unset dependency through would be a type error —
+ * and spreading a conditional per key turns a wiring list into a thicket of
+ * ternaries that hides which dependencies actually exist.
+ *
+ * @param {Record<string, any>} values
+ * @returns {Record<string, any>}
+ */
+function defined(values) {
+  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined));
+}
+
+/**
+ * The default pipeline: a stated gap, not a silent success.
+ *
+ * Stage 1 (Resolve, §2.8) has no implementation. A default that returned an
+ * empty report would make every target succeed with zero reviews — which the
+ * Gate would then correctly reject as a count drop, producing an alert about
+ * the wrong thing entirely.
+ *
+ * @returns {Promise<never>}
+ */
+async function notImplemented() {
+  const error = new Error(
+    'no acquisition pipeline is wired: the Listing Resolver (C-08, stage 1) is not implemented, ' +
+      'so a target cannot be taken through the eleven stages yet',
+  );
+
+  /** @type {any} */ (error).code = 'ERR-PIPELINE-INCOMPLETE';
+
+  throw error;
 }
 
 /**

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   doctorCommand,
+  exitForRun,
   planCommand,
   projectCommand,
   validateConfigCommand,
@@ -265,5 +266,76 @@ describe('readSecrets — read once, into a sealed object (TR-SEC-011)', () => {
 
   it('is frozen', () => {
     expect(Object.isFrozen(readSecrets({}))).toBe(true);
+  });
+});
+
+describe('DEL-180 / EDR-030 ? the harvest exit code classifies refusals apart from defects', () => {
+  /**
+   * @param {ReadonlyArray<any>} states
+   * @returns {any[]}
+   */
+  const outcomes = (states) =>
+    states.map((state, index) =>
+      typeof state === 'string'
+        ? { clientSlug: `c${index}`, listingKey: 'm', state, code: null }
+        : { clientSlug: `c${index}`, listingKey: 'm', ...state },
+    );
+
+  it('reports OK when every target succeeded', () => {
+    expect(exitForRun(outcomes(['succeeded', 'succeeded']))).toBe(EXIT.OK);
+  });
+
+  it('reports ALL_FAILED and PARTIAL by proportion', () => {
+    // Some targets working is a materially different situation from none
+    // working, and collapsing them makes one broken client look like an outage.
+    expect(exitForRun(outcomes(['failed', 'failed']))).toBe(EXIT.ALL_FAILED);
+    expect(exitForRun(outcomes(['failed', 'succeeded']))).toBe(EXIT.PARTIAL);
+  });
+
+  it('reports PARTIAL when targets were deferred rather than run', () => {
+    // Deferred is a scheduling fact, not a failure ? but the run did not finish
+    // its plan, and 4 is the honest description of that.
+    expect(exitForRun(outcomes(['succeeded', 'deferred']))).toBe(EXIT.PARTIAL);
+  });
+
+  it('reports CHALLENGE ahead of a generic policy block', () => {
+    // A challenge is terminal and carries a critical alert (INV-07). A run that
+    // reported it as an ordinary policy block would lose that distinction at
+    // exactly the moment it matters.
+    const blocked = outcomes([
+      { state: 'blocked', code: 'ERR-POLICY-KILLSWITCH' },
+      { state: 'blocked', code: 'ERR-BLOCKED-CHALLENGE' },
+    ]);
+
+    expect(exitForRun(blocked)).toBe(EXIT.CHALLENGE);
+  });
+
+  it('reports POLICY_BLOCKED when the block was policy', () => {
+    expect(exitForRun(outcomes([{ state: 'blocked', code: 'ERR-POLICY-BREAKER-OPEN' }]))).toBe(
+      EXIT.POLICY_BLOCKED,
+    );
+  });
+
+  it('lets a DEFECT outrank every refusal', () => {
+    // A run containing one genuine failure is a defect regardless of how many
+    // targets the Gate separately refused: the failure is the thing somebody
+    // has to look at.
+    const mixed = outcomes([
+      { state: 'blocked', code: 'ERR-BLOCKED-CHALLENGE' },
+      { state: 'failed', code: 'ERR-TARGET-FAILED' },
+      'succeeded',
+    ]);
+
+    expect(exitForRun(mixed)).toBe(EXIT.PARTIAL);
+  });
+
+  it('reports INTERNAL when a planned target has no outcome (TR-APP-006)', () => {
+    // A missing target is invisible in the manifest and therefore invisible in
+    // the incident. That is a defect in the engine, not a refusal.
+    expect(exitForRun(outcomes(['succeeded']), ['c1/main'])).toBe(EXIT.INTERNAL);
+  });
+
+  it('keeps 5, 6 and 7 distinct, because the workflow treats them alike but alerts differently', () => {
+    expect(new Set([EXIT.GATE_REJECTED, EXIT.POLICY_BLOCKED, EXIT.CHALLENGE]).size).toBe(3);
   });
 });

@@ -1,0 +1,132 @@
+name: Release
+
+# Full re-verification at the tag.
+#
+# ## Why this is not "ci.yml already passed"
+#
+# `ci.yml` runs against a pull request's merge commit. A tag points at `main`
+# after the merge, which is a different tree whenever anything else landed in
+# between — and "both PRs were green, the merge is not" is the ordinary way a
+# main branch breaks.
+#
+# The engine adopts a tag at the next scheduled run (§49.2), unattended, against
+# real client sites. There is no human watching the first production use of a
+# release. That is the whole argument for re-running everything here rather than
+# trusting a green badge from a tree that no longer exists.
+#
+# The browser suite runs too, which `ci.yml` also does — but this is the last
+# point at which a Chromium behaviour change can be caught before it reaches a
+# scheduled harvest with nobody watching.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tag or SHA to verify.
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Re-verify at the tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup engine
+        uses: ./.github/actions/setup-engine
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format
+        run: npm run format:check
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Schemas
+        run: node scripts/validate-all.mjs
+
+      - name: Tests
+        run: npm test
+
+      - name: Browser tests
+        run: npm run test:browser
+
+      - name: Renderer size budget
+        # Blocking (FE-05). The renderer ships to client sites and its size is
+        # their cost, not ours; a tag is the last point at which that is still
+        # cheap to fix.
+        run: npm run size
+
+      - name: Assert the tag matches the engine version
+        run: |
+          set -euo pipefail
+          tag="${{ github.event.inputs.ref || github.ref_name }}"
+          declared="v$(node -e "import('./src/cli/composition.mjs').then((m) => process.stdout.write(m.ENGINE_VERSION))")"
+
+          # The version is stamped into every payload's provenance block. If the
+          # tag and the constant disagree, every payload this release produces
+          # names a version that does not exist, and "which engine produced
+          # this?" stops being answerable from the data.
+          if [ "$tag" != "$declared" ]; then
+            echo "::error::tag $tag does not match ENGINE_VERSION $declared"
+            exit 1
+          fi
+
+          echo "tag $tag matches ENGINE_VERSION $declared"
+
+  release:
+    name: Publish the release
+    needs: verify
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # The only write, and only after `verify` has passed in full.
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Create the release
+        uses: actions/github-script@10b53a9ec6c222bb4ce97aa6bd2b5f739696b536 # v7
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+
+            await github.rest.repos.createRelease({
+              ...context.repo,
+              tag_name: tag,
+              name: tag,
+              generate_release_notes: true,
+              body: [
+                '## Adoption',
+                '',
+                'The engine adopts this tag at the **next scheduled run**, unattended.',
+                'There is no manual deploy step and no human watching its first',
+                'production use.',
+                '',
+                '## Rollback',
+                '',
+                'Revert the commit and re-tag (~5 min). Engine, configuration and data',
+                'roll back independently (§49.2) — reverting an engine release does not',
+                'touch published payloads, and no re-harvest is required.',
+              ].join('\n'),
+            });

@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           shards="${{ github.event.inputs.shards || '2' }}"
-          node bin/tpre.mjs plan --shards "$shards" --json > plan.json
+          node bin/tpre.mjs plan --shards "$shards" --output json > plan.json
           due=$(node -e "process.stdout.write(String(JSON.parse(require('node:fs').readFileSync('plan.json','utf8')).total))")
           matrix=$(node -e "const n=Number('$shards'); process.stdout.write(JSON.stringify({shard: Array.from({length:n},(_,i)=>i)}))")
           echo "due=$due" >> "$GITHUB_OUTPUT"

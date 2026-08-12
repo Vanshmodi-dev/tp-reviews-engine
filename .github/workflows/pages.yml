@@ -1,0 +1,87 @@
+name: Pages
+
+# Distribution. Publishes the `data` branch to GitHub Pages so client sites can
+# fetch their payload from a static origin (INV-01) with no server of ours in
+# the path.
+#
+# ## The deliberate permission absence (TR-CI-131)
+#
+# The job that can publish to the public internet **cannot write to this
+# repository**. `deploy` declares `pages: write` and `id-token: write` and no
+# `contents` at all.
+#
+# That makes a whole class of bug structurally impossible rather than merely
+# unlikely: a deployment step can never, through any mistake, rewrite the data
+# branch it is deploying. There is no code path from "the deploy went wrong" to
+# "the payloads are gone".
+#
+# `build` is separate and read-only. It exists because
+# `upload-pages-artifact` needs files on disk, which needs a checkout, which
+# needs `contents: read`. Splitting the two is what lets the privileged half
+# have no repository access — the same shape as `harvest.yml`'s alert job.
+on:
+  push:
+    branches: [data]
+  workflow_dispatch:
+
+# Nothing at the top. Every job states its own, so adding a job without thinking
+# about permissions gives it none rather than giving it the default.
+permissions: {}
+
+concurrency:
+  # One deploy at a time, and never cancel one in flight: a cancelled Pages
+  # deployment can leave the site serving a half-published tree.
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the Pages artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # Read. Not write — see the header.
+      contents: read
+    steps:
+      - name: Checkout data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: data
+          # The token is not needed after checkout, and leaving it in the
+          # working tree's git config is how a later step acquires credentials
+          # nobody intended to give it.
+          persist-credentials: false
+
+      - name: Add cache headers manifest
+        run: |
+          set -euo pipefail
+          # Pages sets its own headers and they are NOT configurable here.
+          # §49.1 step 7 requires the ACTUAL headers to be measured and
+          # recorded before the first client, because the manifest freshness
+          # pattern depends on cache behaviour and assumed headers are not
+          # verified headers. See docs/runbooks/pages-headers.md.
+          test -f docs/runbooks/pages-headers.md || echo "::warning::pages-headers runbook not present in this tree"
+          ls -la
+
+      - name: Upload the artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: .
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      # THE DELIBERATE ABSENCE (TR-CI-131). No `contents`. This job publishes to
+      # the world and cannot touch the repository.
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy
+        id: deploy
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

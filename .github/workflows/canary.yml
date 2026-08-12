@@ -1,0 +1,170 @@
+name: Canary
+
+# Drift detection. Runs the acquisition path against a small fixed target every
+# three hours and reports what it saw — and NEVER publishes.
+#
+# ## Why a canary exists at all
+#
+# The failure this catches is the one the harvest cannot: a source changes its
+# markup, extraction degrades, and the harvest reports `partial` or quarantines
+# rows. That is correct behaviour and, by design, does not fail anything — INV-03
+# means absence is not deletion, so the engine holds the line and waits.
+#
+# Held correctly, silently, that can persist for days. The canary is what turns
+# "the engine is coping" into "somebody should look at this", hours after the
+# change rather than at the next weekly review.
+#
+# ## Why it must never publish (TR-CI-150)
+#
+# A canary runs far more often than any tier. If it published, it would become
+# the de-facto harvest cadence for its target, at four times the request rate we
+# chose deliberately in §28.3 — and the first thing anyone would learn from a
+# rate-limit block is that the safety mechanism caused it.
+#
+# Non-publication is STRUCTURAL, not a flag: this job never checks out the
+# `data` branch, so the publisher has nowhere to write. A `--dry-run` flag would
+# be the weaker guarantee — one careless edit away from being wrong — and it
+# does not exist on this CLI in any case (see the note above the run step).
+on:
+  schedule:
+    # Offset from all four harvest crons (§28.3). If the canary shared a minute
+    # with a tier, a source observing our request rate could not distinguish
+    # them — and neither could we, reading our own logs during an incident.
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    name: Canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      # `state` only — health records and the drift fingerprint. NOT `data`.
+      # The write scope is the same either way; what makes publication
+      # impossible is that the `data` branch is never checked out below.
+      contents: write
+      issues: write
+    steps:
+      - name: Checkout engine
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # DELIBERATELY ABSENT: the `data` checkout.
+      #
+      # `harvest.yml` needs it and must never lose it (CI-03, IR-10). Here the
+      # opposite is true: without a `data` working tree the publisher has
+      # nowhere to write, so "the canary published" is not a bug that can
+      # happen. Do not add it to "make the canary more like the harvest".
+      - name: Checkout state
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: state
+          path: .state
+
+      - name: Setup engine
+        uses: ./.github/actions/setup-engine
+
+      # NOTE: there is no `--dry-run` flag, deliberately. Publication happens
+      # inside the eleven stages (`runStages`), and stage 1 — the Listing
+      # Resolver, C-08 — has no implementation yet, so a flag to suppress
+      # publication would suppress nothing and would read as a guarantee.
+      #
+      # Non-publication here is STRUCTURAL and does not depend on a flag: the
+      # `data` branch is never checked out, so the publisher has nowhere to
+      # write. That is the stronger guarantee of the two anyway.
+      #
+      # Until C-08 lands this step exits non-zero with ERR-PIPELINE-INCOMPLETE,
+      # which is the engine reporting a known gap rather than a canary failure.
+      - name: Run the canary target
+        id: canary
+        run: |
+          set +e
+          node bin/tpre.mjs harvest --shards 1 --shard 0 --output json > canary.json
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          set -e
+          cat canary.json || true
+
+      - name: Classify the exit code
+        id: classify
+        run: |
+          set -euo pipefail
+          code="${{ steps.canary.outputs.code }}"
+
+          # Same classification as harvest.yml (CI-04, EDR-030). 5/6/7 are
+          # correct refusals to publish, not broken code. A red badge here would
+          # train the maintainer to ignore red badges everywhere.
+          case "$code" in
+            0|4)  echo "status=healthy" >> "$GITHUB_OUTPUT" ;;
+            5|6|7)
+              echo "status=drift" >> "$GITHUB_OUTPUT"
+              echo "::warning::canary refused to publish (exit $code) — likely source drift"
+              ;;
+            *)
+              echo "status=broken" >> "$GITHUB_OUTPUT"
+              echo "::error::canary failed with exit $code"
+              exit "$code"
+              ;;
+          esac
+
+      - name: Record the canary health record
+        if: always()
+        run: |
+          set -euo pipefail
+          cd .state
+          git config user.name 'tp-reviews-engine[bot]'
+          git config user.email 'bot@users.noreply.github.com'
+          mkdir -p health/canary
+          cp ../canary.json "health/canary/$(date -u +%Y-%m-%dT%H%M%SZ).json" 2>/dev/null || true
+          git add -A
+          # An empty commit would be noise every three hours forever.
+          git diff --cached --quiet || git commit -m "chore(canary): record $(date -u +%FT%TZ)"
+          git push origin state
+
+      - name: Open or update the drift issue
+        if: steps.classify.outputs.status == 'drift'
+        uses: actions/github-script@10b53a9ec6c222bb4ce97aa6bd2b5f739696b536 # v7
+        with:
+          script: |
+            const title = 'Canary: source drift detected';
+            const { data: open } = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'open',
+              labels: 'canary',
+            });
+
+            const body = [
+              `The canary refused to publish at ${new Date().toISOString()}.`,
+              '',
+              'That is the engine behaving correctly — a refusal, not a crash —',
+              'and it is exactly the state that would otherwise persist silently',
+              'because INV-03 means the engine holds rather than deletes.',
+              '',
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              'Check the selector pack against the source before the next tier run.',
+            ].join('\n');
+
+            // Deduped by title. A new issue every three hours would bury the
+            // first one, which is the only one anybody needed to read.
+            const existing = open.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                ...context.repo,
+                title,
+                body,
+                labels: ['canary', 'drift'],
+              });
+            }

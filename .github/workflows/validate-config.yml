@@ -1,0 +1,140 @@
+name: Validate config
+
+# Configuration is one of the three deployables (§49.2), and the only one a
+# human edits directly. It is also the one whose mistakes are quietest: a
+# mistyped cadence or a listing key pointing at the wrong business produces a
+# perfectly successful run against the wrong data.
+#
+# So this workflow does two things, and the second matters more than the first:
+#
+#   1. Validates the config. Catches the typo.
+#   2. Posts the EFFECT of the change as a PR comment. Catches the config that
+#      is valid and wrong — which is most of them.
+#
+# TR-CI-003: `pull_request_target` appears nowhere. It would run with the base
+# repository's token against a fork's code, which is how a repository hands a
+# write token to an untrusted pull request. `pull_request` is correct here
+# precisely because it does NOT get one.
+on:
+  pull_request:
+    paths:
+      - 'clients/**'
+      - 'profiles/**'
+      - 'selectors/**'
+      - 'config/**'
+      - 'schemas/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  # A second push to the same PR makes the first comment obsolete.
+  group: validate-config-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate and preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      # The one write, and it is a comment. Not `contents`, so a config PR can
+      # never cause this workflow to modify the repository it is reviewing.
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup engine
+        uses: ./.github/actions/setup-engine
+        with:
+          # Configuration validation is pure — it reads files and arithmetic
+          # over them (TR-APP-030). A browser here would add ~40 s to every
+          # config PR for nothing.
+          browser: 'false'
+
+      - name: Validate schemas
+        run: node scripts/validate-all.mjs
+
+      - name: Validate configuration
+        id: validate
+        run: |
+          set -euo pipefail
+          node bin/tpre.mjs validate-config --output json > validation.json
+          cat validation.json
+
+      - name: Compute the effect of this change
+        id: effect
+        run: |
+          set -euo pipefail
+          # `plan` is the honest preview: it answers "which targets would this
+          # config actually schedule, and when", which is the question a
+          # reviewer is really asking and cannot answer by reading a diff.
+          node bin/tpre.mjs plan --shards 1 --output json > plan.json
+          cat plan.json
+
+      - name: Comment the effect on the pull request
+        uses: actions/github-script@10b53a9ec6c222bb4ce97aa6bd2b5f739696b536 # v7
+        with:
+          script: |
+            const { readFileSync } = require('node:fs');
+
+            const read = (path) => {
+              try {
+                return JSON.parse(readFileSync(path, 'utf8'));
+              } catch {
+                return null;
+              }
+            };
+
+            const plan = read('plan.json');
+            const validation = read('validation.json');
+            const targets = plan?.targets ?? plan?.due ?? [];
+
+            const body = [
+              '## Configuration effect preview',
+              '',
+              'Validation and the resulting **schedule**, not the diff. A config',
+              'can be valid and still point at the wrong business.',
+              '',
+              `**Clients validated:** ${validation?.clients?.length ?? validation?.count ?? 'see log'}`,
+              `**Targets this config would schedule:** ${Array.isArray(targets) ? targets.length : 'see log'}`,
+              '',
+              '<details><summary>Plan output</summary>',
+              '',
+              '```json',
+              JSON.stringify(plan, null, 2).slice(0, 60000),
+              '```',
+              '',
+              '</details>',
+              '',
+              '_Check the target list against the businesses you intended. A listing',
+              'key that resolves to the wrong place produces a completely successful',
+              'run against somebody else’s reviews._',
+            ].join('\n');
+
+            // One comment per PR, updated in place. A new comment per push
+            // buries the current state under a history nobody reads.
+            const marker = '## Configuration effect preview';
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(
+              (comment) => comment.user.type === 'Bot' && comment.body.startsWith(marker),
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

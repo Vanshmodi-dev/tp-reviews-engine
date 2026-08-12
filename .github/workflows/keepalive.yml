@@ -1,0 +1,127 @@
+name: Keepalive
+
+# Two jobs that look like one, and only the second one matters (§48.3,
+# TR-CI-110).
+#
+# ## The obvious half: PREVENT dormancy
+#
+# GitHub disables scheduled workflows in repositories with no activity for 60
+# days. This engine's steady state is "nobody touches the repository" — that is
+# what unattended means — so the success condition and the disable condition are
+# the same condition.
+#
+# `prevent` writes a timestamp to `state` monthly. Activity, therefore no
+# disable.
+#
+# ## The half that catches RISK-17: DETECT dormancy
+#
+# Producing activity does not prove the schedules are still enabled. They can be
+# disabled by a repository setting, by an admin, by a policy change, or by the
+# 60-day rule having already fired before this workflow was added.
+#
+# In every one of those cases the symptom is identical and invisible: every
+# client silently goes stale, no run fails, no alert fires, and nobody notices
+# until a client asks why their reviews stopped in March.
+#
+# `detect` asks the API whether `harvest.yml` is actually enabled, and opens an
+# issue if it is not. Prevention is a hope; detection is a check.
+on:
+  schedule:
+    # Monthly, comfortably inside the 60-day window — twice the margin, because
+    # a single missed run must not be able to cost the whole cushion.
+    - cron: '11 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prevent:
+    name: Prevent dormancy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout state
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: state
+          path: .state
+
+      - name: Touch the keepalive timestamp
+        run: |
+          set -euo pipefail
+          cd .state
+          git config user.name 'tp-reviews-engine[bot]'
+          git config user.email 'bot@users.noreply.github.com'
+          date -u +%FT%TZ > keepalive.txt
+          git add keepalive.txt
+          # `--allow-empty` deliberately NOT used elsewhere in this engine, and
+          # deliberately not needed here: the timestamp always differs, so the
+          # commit is always real. An empty commit would be activity without
+          # information, which is the thing hash gating exists to prevent.
+          git commit -m "chore(keepalive): $(date -u +%FT%TZ)"
+          git push origin state
+
+  detect:
+    name: Detect disabled schedules
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # No `contents`. This job reads workflow state through the API and raises
+      # an issue; it has no reason to write to the repository and therefore
+      # cannot.
+      actions: read
+      issues: write
+    steps:
+      - name: Assert the harvest schedule is enabled
+        uses: actions/github-script@10b53a9ec6c222bb4ce97aa6bd2b5f739696b536 # v7
+        with:
+          script: |
+            const { data } = await github.rest.actions.listRepoWorkflows({ ...context.repo });
+            const harvest = data.workflows.find((workflow) =>
+              workflow.path.endsWith('/harvest.yml'),
+            );
+
+            // A missing harvest.yml is worse than a disabled one and must not
+            // be reported as healthy by omission.
+            const problem =
+              harvest === undefined
+                ? 'harvest.yml is not present in this repository at all'
+                : harvest.state !== 'active'
+                  ? `harvest.yml is in state "${harvest.state}", not "active"`
+                  : null;
+
+            if (problem === null) {
+              core.info('harvest.yml is active');
+
+              return;
+            }
+
+            core.setFailed(problem);
+
+            const title = 'Harvest schedule is not active';
+            const { data: open } = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'open',
+              labels: 'dormancy',
+            });
+
+            if (open.some((issue) => issue.title === title)) return;
+
+            await github.rest.issues.create({
+              ...context.repo,
+              title,
+              body: [
+                `**${problem}**`,
+                '',
+                'This is RISK-17. While it holds, every client silently goes stale:',
+                'no run fails, no alert fires, and the only symptom is reviews that',
+                'stopped updating on a date nobody noticed.',
+                '',
+                'Re-enable the workflow in Actions → Harvest → Enable workflow, then',
+                'dispatch one run manually to confirm it completes.',
+              ].join('\n'),
+              labels: ['dormancy', 'incident'],
+            });

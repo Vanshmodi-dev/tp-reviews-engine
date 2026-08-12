@@ -1,0 +1,133 @@
+name: Dependency audit
+
+# Supply-chain guard.
+#
+# ## Why this matters more here than in most repositories
+#
+# The engine has **one** production dependency (`playwright`). That is a
+# deliberate posture, not an accident of scope, and this workflow is what keeps
+# it from eroding one convenient package at a time.
+#
+# The sharper reason is `frontend/renderer/`: it ships to client websites. A
+# dependency there is a supply-chain risk multiplied by client count — one
+# compromised transitive package executing on every client site at once, with no
+# deploy of ours involved. `renderer-api.test.mjs` asserts it has no imports at
+# all; this workflow watches the rest of the tree, weekly, so the posture is
+# checked on a clock rather than when somebody happens to look.
+on:
+  schedule:
+    - cron: '29 6 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup engine
+        uses: ./.github/actions/setup-engine
+        with:
+          browser: 'false'
+
+      - name: Assert the production dependency count has not grown
+        run: |
+          set -euo pipefail
+          count="$(node -e "const p=require('./package.json');process.stdout.write(String(Object.keys(p.dependencies??{}).length))")"
+          names="$(node -e "const p=require('./package.json');process.stdout.write(Object.keys(p.dependencies??{}).join(', '))")"
+
+          echo "production dependencies: $count — $names"
+
+          # DEP-1. Checked here as well as in the architecture test because the
+          # two answer different questions: the test asks "is the graph still
+          # clean on this commit", this asks "has it drifted since last week"
+          # on a schedule, in a repository nobody may have opened.
+          if [ "$count" -gt 1 ]; then
+            echo "::error::production dependencies grew to $count ($names). DEP-1 allows exactly one."
+            exit 1
+          fi
+
+      - name: Audit
+        id: audit
+        run: |
+          set +e
+          npm audit --audit-level=high --json > audit.json
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          set -e
+          node -e "
+            const a = require('./audit.json');
+            const v = a.metadata?.vulnerabilities ?? {};
+            console.log('critical', v.critical ?? 0, 'high', v.high ?? 0, 'moderate', v.moderate ?? 0);
+          "
+
+      - name: Check for outdated packages
+        # Informational. `npm outdated` exits non-zero when anything is behind,
+        # which is almost always true and is not a failure — treating it as one
+        # would make this workflow red permanently, and a permanently red
+        # workflow is one nobody reads.
+        run: npm outdated || true
+
+      - name: Open an issue for high or critical advisories
+        if: steps.audit.outputs.code != '0'
+        uses: actions/github-script@10b53a9ec6c222bb4ce97aa6bd2b5f739696b536 # v7
+        with:
+          script: |
+            const { readFileSync } = require('node:fs');
+
+            let counts = {};
+
+            try {
+              counts = JSON.parse(readFileSync('audit.json', 'utf8')).metadata?.vulnerabilities ?? {};
+            } catch {
+              counts = {};
+            }
+
+            const title = 'Dependency audit: high or critical advisories';
+            const { data: open } = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'open',
+              labels: 'supply-chain',
+            });
+
+            const body = [
+              `critical: ${counts.critical ?? 0} · high: ${counts.high ?? 0} · moderate: ${counts.moderate ?? 0}`,
+              '',
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              'The engine has one production dependency, so a high advisory here is',
+              'almost always in the dev tree. That still matters — dev tooling runs',
+              'with repository credentials in CI — but it does not reach client sites.',
+              '',
+              'Check whether the advisory is in `dependencies` or `devDependencies`',
+              'before deciding urgency.',
+            ].join('\n');
+
+            const existing = open.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                ...context.repo,
+                title,
+                body,
+                labels: ['supply-chain'],
+              });
+            }

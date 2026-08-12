@@ -254,6 +254,19 @@ export default [
           message:
             'TR-CLI-003: process.exit() is permitted in cli/ only. Elsewhere, return a Result and let the composition root decide the exit code.',
         },
+        {
+          // PUB-04 / TR-PUB-003. The `data` branch is the published state of
+          // every client's reviews; a force push against it discards whatever
+          // another shard committed seconds earlier, and the loss is SILENT —
+          // the push succeeds and the run reports success.
+          //
+          // The temptation always arrives disguised as conflict resolution.
+          // The correct answer is fetch, rebase, retry, and then fail loudly.
+          selector:
+            'Literal[value=/^--force(-with-lease|-if-includes)?$/], Literal[value=/^push .*--force/]',
+          message:
+            'TR-PUB-003: --force and --force-with-lease must not appear in this repository. A rejected push means another shard committed; rebase and retry, then fail with ERR-PUBLISH-CONFLICT.',
+        },
       ],
     },
   },
@@ -492,7 +505,14 @@ export default [
     // TRD 67.2 scopes the no-default-export rule to src/ (IMPL PLAN 19.1); this
     // narrows the baseline block back to that scope rather than weakening it.
     files: ['*.config.mjs'],
-    rules: { 'no-restricted-syntax': 'off' },
+    rules: {
+      'no-restricted-syntax': 'off',
+      // The 400-line budget exists to stop a MODULE growing past what one
+      // person can hold. This file is a list of rules with their reasons, and
+      // splitting it would hide the very thing it is for — the rules would
+      // stop being readable in one pass, which is when one quietly goes wrong.
+      'max-lines': 'off',
+    },
   },
 
   // ------------------------------------- PW-01: the one permitted importer
@@ -517,6 +537,33 @@ export default [
               message: 'DR-6: import the core through core/index.mjs, never past it.',
             },
           ],
+        },
+      ],
+    },
+  },
+
+  // --------------------------- PUB-04: the file that implements the ban
+  {
+    // `infra/git.mjs` names the forbidden flags in order to REJECT them at
+    // runtime, and the lint selector cannot tell a denylist from a use — the
+    // same prose-versus-code problem the browser guards hit.
+    //
+    // Exempting the whole file would let a real `push --force` through here, so
+    // the second mechanism is `tests/architecture/publish-safety.test.mjs`,
+    // which asserts the flags appear ONLY inside the denylist array and never
+    // in an argument list handed to git.
+    files: ['src/infra/git.mjs'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExportDefaultDeclaration',
+          message:
+            'TRD 67.2: no default exports. A named export is greppable and cannot be silently renamed at the import site.',
+        },
+        {
+          selector: "MemberExpression[property.name='exit'][object.name='process']",
+          message: 'TR-CLI-003: process.exit() is permitted in cli/ only.',
         },
       ],
     },

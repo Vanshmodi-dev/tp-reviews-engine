@@ -92,7 +92,22 @@ export default defineConfig({
       reporter: ['text-summary', 'lcov'],
       include: ['src/**/*.mjs'],
       exclude: [
-        'src/**/index.mjs',
+        // ONLY the barrel. `src/**/index.mjs` was the original rule and it
+        // exempted eleven files, of which exactly one is a barrel — the other
+        // ten are implementations that happen to be named `index.mjs`:
+        // the reconciler (328 lines), the extractor (370), the Publish Gate
+        // (216), the normaliser, the config loader, the CLI, and all three
+        // acquisition adapters.
+        //
+        // The gate is the sharpest case. `src/core/gate/**` carries a 100%
+        // threshold — the strictest obligation in the project, there because
+        // an unreached branch in the gate is how IR-08 (short-circuit
+        // evaluation) hides — and that threshold was only ever measuring
+        // `rules.mjs`. `evaluateGate` itself was exempt.
+        //
+        // The modules were tested throughout; they were not REPORTED. A rule
+        // written for barrels quietly acquired ten implementations.
+        'src/core/index.mjs',
         'tests/**',
         // Covered by the `browser` project (tests/integration/browser-*), which
         // cannot run in this invocation: Chromium competes for CPU with

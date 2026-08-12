@@ -35,6 +35,8 @@
  */
 
 import { createCsvAdapter } from '../adapters/acquisition/file-csv/index.mjs';
+import { createBusinessProfileAdapter } from '../adapters/acquisition/google-business-profile-api/index.mjs';
+import { createPlacesAdapter } from '../adapters/acquisition/google-places-api/index.mjs';
 import { createFilesystemPublisher } from '../adapters/publisher/filesystem.mjs';
 import { createGitState } from '../adapters/state/git-state.mjs';
 import { ERROR_CLASSES } from '../core/index.mjs';
@@ -138,9 +140,11 @@ export function buildDependencies(options = {}) {
  * @returns {Record<string, any>}
  */
 function adapterRegistry() {
-  const csv = createCsvAdapter();
+  // Keyed by each adapter's own `id`, so the registry cannot disagree with the
+  // string that lands in a payload's provenance block.
+  const registered = [createCsvAdapter(), createPlacesAdapter(), createBusinessProfileAdapter()];
 
-  return { [csv.id]: csv };
+  return Object.fromEntries(registered.map((adapter) => [adapter.id, adapter]));
 }
 
 /**

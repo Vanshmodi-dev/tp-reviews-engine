@@ -136,7 +136,7 @@ function derive(extracted, ctx) {
     // so keying on it would give the same anonymous review a new identity every
     // run — and the reconciler would read that as a deletion and an insertion.
     authorKey: deriveAuthorKey(cleanAuthor, { listingKey: ctx.listingKey, text }),
-    date: pinDate(relativePhrase(extracted), ctx.observedAtMs, ctx.locale),
+    date: resolveDate(extracted, ctx),
     language: text === null ? { code: null, confidence: null } : detectLanguage(text),
     reply: normaliseReply(extracted.owner_reply, ctx),
     ...counts(extracted),
@@ -146,6 +146,44 @@ function derive(extracted, ctx) {
 /** @param {any} extracted @returns {string} */
 function relativePhrase(extracted) {
   return extracted.relative_date_raw ?? extracted.relative_date ?? '';
+}
+
+/** An absolute calendar date, as several adapters supply it. */
+const ABSOLUTE_DATE = /^(\d{4}-\d{2}-\d{2})/u;
+
+/**
+ * The review's date, from whichever form the adapter had.
+ *
+ * Not every source speaks in relative phrases. The CSV adapter carries a real
+ * calendar date, and the Business Profile API carries an RFC 3339 `createTime`.
+ * Pinning only the relative phrase threw those away and gave every such review
+ * `null` with `unknown` precision — losing information the source had actually
+ * provided, and making date-ordered display meaningless for two of the three
+ * adapters.
+ *
+ * An absolute date is taken at DAY precision and HIGH confidence, because that
+ * is what it is: the source said so, and no estimation was involved.
+ *
+ * @param {any} extracted
+ * @param {any} ctx
+ * @returns {{ date_estimated: string | null, date_precision: string, date_confidence: string }}
+ */
+function resolveDate(extracted, ctx) {
+  // The relative-date field is where an adapter puts whatever the source gave
+  // it, and that is not always relative: the CSV adapter carries a calendar
+  // date there, and the Business Profile API an RFC 3339 `createTime`.
+  const raw = String(extracted.date ?? extracted.date_raw ?? relativePhrase(extracted));
+  const absolute = ABSOLUTE_DATE.exec(raw);
+
+  if (absolute !== null) {
+    return {
+      date_estimated: absolute[1] ?? null,
+      date_precision: 'day',
+      date_confidence: 'high',
+    };
+  }
+
+  return pinDate(relativePhrase(extracted), ctx.observedAtMs, ctx.locale);
 }
 
 /**

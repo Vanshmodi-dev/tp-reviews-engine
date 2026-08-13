@@ -79,8 +79,8 @@ function stageError(code, detail) {
  * @param {object} deps
  * @param {{ resolve: (input: any) => Promise<any> }} deps.resolver
  * @param {(input: any) => Promise<any>} deps.acquire  Stage 2, from the adapter registry.
- * @param {{ readLedger: (key: string) => Promise<any>, writeLedger: (key: string, ledger: any) => Promise<any> }} deps.state
- * @param {{ read: (path: string) => Promise<any>, publish: (input: any) => Promise<any> }} deps.publisher
+ * @param {{ readLedger: (key: string, clientSlug: string) => Promise<any>, writeLedger: (key: string, ledger: any, clientSlug: string) => Promise<any> }} deps.state
+ * @param {{ read: (key: string, clientSlug: string) => Promise<any>, publish: (input: any) => Promise<any> }} deps.publisher
  * @param {{ enrich: (reviews: ReadonlyArray<any>) => Promise<any> }} [deps.enricher]
  * @param {() => number} deps.now
  * @param {ReadonlySet<string>} [deps.denylist]  Compliance suppressions, from `main`.
@@ -189,7 +189,7 @@ async function stageReconcile(ctx, normalised, report) {
   // `null` would mean "we could not read the history", which is the state
   // INV-04 says must never be treated as evidence of removal.
   const prior =
-    (await ctx.deps.state.readLedger(ctx.target.listingKey)) ??
+    (await ctx.deps.state.readLedger(ctx.target.listingKey, ctx.target.clientSlug)) ??
     createLedger({ clientSlug: ctx.target.clientSlug, listingKey: ctx.target.listingKey, now });
 
   const outcome = reconcile({
@@ -242,7 +242,7 @@ async function stageProject(ctx, ledger, harvest, report) {
  * @returns {Promise<any>}
  */
 async function stagePublish(ctx, { ledger, artifacts, report }) {
-  const current = await ctx.deps.publisher.read(ctx.target.listingKey);
+  const current = await ctx.deps.publisher.read(ctx.target.listingKey, ctx.target.clientSlug);
   const verdict = evaluateGate({
     candidate: artifacts.reviews.payload ?? artifacts.reviews,
     prior: current ?? null,
@@ -263,10 +263,13 @@ async function stagePublish(ctx, { ledger, artifacts, report }) {
   const published = await ctx.deps.publisher.publish({
     listingKey: ctx.target.listingKey,
     clientSlug: ctx.target.clientSlug,
-    artifacts,
+    // Only the artifacts that were actually produced. `schemaOrg` is null
+    // unless the client opted in (V-9), and a null entry reaching the publisher
+    // is a crash rather than a skipped file.
+    artifacts: produced(artifacts),
   });
 
-  await ctx.deps.state.writeLedger(ctx.target.listingKey, ledger);
+  await ctx.deps.state.writeLedger(ctx.target.listingKey, ledger, ctx.target.clientSlug);
 
   ctx.logger.info('target published', {
     client: ctx.target.clientSlug,
@@ -347,9 +350,23 @@ function buildReport({ harvest, identity, normalised }) {
 }
 
 /**
+ * Drops artifacts the projector chose not to produce.
+ *
+ * @param {any} artifacts
+ * @returns {Record<string, any>}
+ */
+function produced(artifacts) {
+  return Object.fromEntries(
+    Object.entries(artifacts).filter(([, artifact]) => artifact !== null && artifact !== undefined),
+  );
+}
+
+/**
  * @param {any} ledger
  * @returns {any[]}
  */
 function publishable(ledger) {
-  return Object.values(ledger?.reviews ?? {});
+  // `records` is a Map, not an object. `Object.values` over it returns an empty
+  // array — silently, so an enricher would simply never see a single review.
+  return [...(ledger?.records?.values() ?? [])];
 }

@@ -34,12 +34,14 @@
  * @module cli/composition
  */
 
+import { createEnricher } from '../app/enrich/index.mjs';
+import { createRunStages } from '../app/stages/run-stages.mjs';
 import { createCsvAdapter } from '../adapters/acquisition/file-csv/index.mjs';
 import { createBusinessProfileAdapter } from '../adapters/acquisition/google-business-profile-api/index.mjs';
 import { createPlacesAdapter } from '../adapters/acquisition/google-places-api/index.mjs';
 import { createFilesystemPublisher } from '../adapters/publisher/filesystem.mjs';
 import { createGitState } from '../adapters/state/git-state.mjs';
-import { ERROR_CLASSES } from '../core/index.mjs';
+import { ERROR_CLASSES, SCHEMA_VERSION } from '../core/index.mjs';
 import { createSystemClock } from '../infra/clock.mjs';
 import { createLogger } from '../infra/logger/jsonl.mjs';
 import { createRedactor } from '../infra/logger/redact.mjs';
@@ -92,7 +94,7 @@ export function readSecrets(env) {
 /**
  * Builds every concrete dependency.
  *
- * @param {{ env?: Record<string, string | undefined>, stateRoot?: string, dataRoot?: string }} [options]
+ * @param {{ env?: Record<string, string | undefined>, stateRoot?: string, dataRoot?: string, denylist?: ReadonlySet<string> }} [options]
  * @returns {any}
  */
 export function buildDependencies(options = {}) {
@@ -110,6 +112,7 @@ export function buildDependencies(options = {}) {
 
   const state = createGitState({ root: options.stateRoot ?? '.state' });
   const publisher = createFilesystemPublisher({ root: options.dataRoot ?? '.publish' });
+  const adapters = adapterRegistry();
 
   return {
     env,
@@ -119,6 +122,19 @@ export function buildDependencies(options = {}) {
     redactor,
     state,
     publisher,
+    // Stages 1–10, wired. This is what retired `notImplemented`: every stage
+    // component existed, and nothing threaded them together.
+    runStages: createRunStages({
+      resolver: staticResolver(),
+      acquire: acquireVia(adapters, secrets),
+      state: ledgerPort(state),
+      publisher: publisherPort(publisher),
+      enricher: createEnricher(),
+      denylist: options.denylist ?? new Set(),
+      now: () => clock.nowMs(),
+      engine: { engine_version: ENGINE_VERSION, schema_version: SCHEMA_VERSION },
+      logger,
+    }),
     // The taxonomy is injected into the retry mechanism here, because `infra/`
     // is domain-ignorant and may not import `core/`.
     retryPolicy: createRetryPolicy(ERROR_CLASSES),
@@ -126,7 +142,7 @@ export function buildDependencies(options = {}) {
     // no plugin-directory scan: the set of adapters a build contains is visible
     // in this file and in the dependency graph, which is what makes "which
     // adapter produced this payload" answerable from the source alone.
-    adapters: adapterRegistry(),
+    adapters,
   };
 }
 
@@ -145,6 +161,181 @@ function adapterRegistry() {
   const registered = [createCsvAdapter(), createPlacesAdapter(), createBusinessProfileAdapter()];
 
   return Object.fromEntries(registered.map((adapter) => [adapter.id, adapter]));
+}
+
+/**
+ * Resolution for adapters that have nothing to resolve.
+ *
+ * A CSV file is not a listing that can be renamed, merged, or repointed — the
+ * operator supplied the path and that IS the identity. Running the DOM
+ * resolver against it would demand an `expected_name` and a browser for no
+ * gain, and would fail closed on both.
+ *
+ * `google:dom` gets `createListingResolver` instead, wired with a browser, when
+ * that adapter is built. Keeping the choice here rather than inside
+ * `runStages` is DR-5: the pipeline should not know which adapter it is
+ * running.
+ *
+ * @returns {{ resolve: (input: any) => Promise<any> }}
+ */
+function staticResolver() {
+  return {
+    async resolve(input) {
+      return { ok: true, value: staticIdentity(input) };
+    },
+  };
+}
+
+/**
+ * @param {any} input
+ * @returns {any}
+ */
+function staticIdentity({ listing, config }) {
+  const identity = listing?.identity ?? {};
+
+  return {
+    canonicalId: firstString([identity.place_id, identity.source_file, listing?.key, 'static']),
+    canonicalUrl: identity.url ?? null,
+    displayName: firstString([config?.resolution?.expected_name, listing?.expected_name, '']),
+    // Null, never derived. A CSV advertises no total, and inventing one from
+    // the row count would make coverage permanently 1.0 and G-08 permanently
+    // silent.
+    advertisedTotal: null,
+    advertisedRating: null,
+    resolvedVia: 'static',
+    source: firstString([listing?.source, 'csv']),
+  };
+}
+
+/**
+ * The first non-empty string in a preference order.
+ *
+ * @param {ReadonlyArray<unknown>} candidates
+ * @returns {string}
+ */
+function firstString(candidates) {
+  const found = candidates.find((value) => typeof value === 'string' && value !== '');
+
+  return typeof found === 'string' ? found : '';
+}
+
+/**
+ * Stage 2, dispatched by the listing's declared adapter.
+ *
+ * An unknown adapter id is a refusal, not a default. Falling back to any
+ * adapter would harvest a client by a method their authorisation record does
+ * not cover — which is the one failure V-3 exists to make impossible.
+ *
+ * @param {Record<string, any>} adapters
+ * @param {Readonly<Record<string, string>>} secrets
+ * @returns {(request: any) => Promise<any>}
+ */
+function acquireVia(adapters, secrets) {
+  return async (request) => {
+    const id = request.listing?.adapter;
+    const adapter = adapters[id];
+
+    if (adapter === undefined) {
+      return {
+        ok: false,
+        error: {
+          code: 'ERR-CONFIG-INVALID',
+          message: `no adapter registered for "${id}". Registered: ${Object.keys(adapters).join(', ')}`,
+        },
+      };
+    }
+
+    const result = await adapter.harvest({
+      ...request,
+      secrets: { ...secrets, ...request.secrets },
+    });
+
+    // Adapters report their own id; the pipeline stamps it into provenance so
+    // "which adapter produced this payload" is answerable from the data alone.
+    return result.ok === false
+      ? result
+      : { ok: true, value: { adapter_id: adapter.id, ...result.value } };
+  };
+}
+
+/**
+ * The ledger port `runStages` expects, over the state adapter's two-key API.
+ *
+ * @param {any} state
+ * @returns {any}
+ */
+function ledgerPort(state) {
+  return {
+    /**
+     * Three outcomes, and the third is the one that matters.
+     *
+     * `found` returns the ledger. `absent` returns null, and the pipeline
+     * creates an empty one — genuinely no history, so every absence rule
+     * applies normally.
+     *
+     * `unreadable` THROWS. It means the file exists and could not be parsed,
+     * which is not the same as "no history" and must never be flattened into
+     * it: reconciling against an empty ledger would see every existing review
+     * as absent and start tombstoning a client's entire corpus (INV-04).
+     * Refusing the target leaves the last good payload published.
+     *
+     * @param {string} listingKey
+     * @param {string} clientSlug
+     * @returns {Promise<any>}
+     */
+    async readLedger(listingKey, clientSlug) {
+      const read = await state.readLedger(clientSlug, listingKey);
+
+      if (read.outcome === 'unreadable') {
+        const error = new Error(`the ledger exists but could not be read: ${read.reason}`);
+
+        /** @type {any} */ (error).code = 'ERR-STATE-UNREADABLE';
+
+        throw error;
+      }
+
+      return read.outcome === 'found' ? read.value : null;
+    },
+    writeLedger: (
+      /** @type {string} */ listingKey,
+      /** @type {any} */ ledger,
+      /** @type {string} */ clientSlug,
+    ) => state.writeLedger(clientSlug, listingKey, ledger),
+  };
+}
+
+/**
+ * The publisher port `runStages` expects.
+ *
+ * `publish` STAGES rather than commits. Commits are one per shard per branch,
+ * not one per target (CON-13, PUB-03) — the harvest command commits once after
+ * every target has run. A commit here would produce one commit per client and
+ * make the repository grow with traffic rather than with change.
+ *
+ * `read` parses, because the gate compares payload objects while the adapter
+ * stores bytes.
+ *
+ * @param {any} publisher
+ * @returns {any}
+ */
+function publisherPort(publisher) {
+  return {
+    async read(/** @type {string} */ listingKey, /** @type {string} */ clientSlug) {
+      const bytes = await publisher.readCurrent(clientSlug, listingKey);
+
+      if (bytes === null) return null;
+
+      try {
+        return JSON.parse(bytes);
+      } catch {
+        // Unreadable is NOT absent. Returning null would tell the gate there is
+        // no prior payload, and every count-drop rule would pass against
+        // nothing (INV-04).
+        return { __unreadable: true };
+      }
+    },
+    publish: (/** @type {any} */ input) => publisher.stage(input),
+  };
 }
 
 /**
@@ -179,11 +370,10 @@ export function buildCommands(deps) {
         runId: deps.runId ?? 'local',
         clients: deps.clients ?? (async () => []),
         health: deps.health ?? (async () => ({})),
-        // The eleven stages arrive from here, not from the command. The Listing
-        // Resolver (C-08) has no implementation yet, so the default reports
-        // that honestly rather than letting a target look successful over a
-        // pipeline with a hole in it.
-        runStages: deps.runStages ?? notImplemented,
+        // The eleven stages arrive from here, not from the command. Wired in
+        // SP-8; `notImplemented` is gone. A caller may still override this —
+        // the tests do — but the default is now a real pipeline.
+        runStages: deps.runStages,
         gate: deps.gate,
         now: deps.now,
         budgets: deps.budgets,
@@ -207,39 +397,6 @@ export function buildCommands(deps) {
  */
 function defined(values) {
   return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined));
-}
-
-/**
- * The default pipeline: a stated gap, not a silent success.
- *
- * A default that returned an empty report would make every target succeed with
- * zero reviews — which the Gate would then correctly reject as a count drop,
- * producing an alert about the wrong thing entirely.
- *
- * **What is actually missing, as of SP-8 hardening.** Every one of the eleven
- * stages now exists as a component: C-08 (the Listing Resolver) was built in
- * SP-8 after the deliverable audit found it had been skipped in PH-16, and
- * C-20 (the Enricher) with it. What has never been written is the COMPOSITION —
- * a `runStages(target)` that threads resolve → navigate → extract → normalise →
- * validate → reconcile → enrich → project → gate → publish together with one
- * context.
- *
- * That is integration work, not a missing part, and it is the last thing
- * between this engine and a live harvest. Naming it precisely here matters:
- * this message is what an operator reads when a dispatch fails, and it named
- * C-08 for four phases after C-08 stopped being the reason.
- *
- * @returns {Promise<never>}
- */
-async function notImplemented() {
-  const error = new Error(
-    'no acquisition pipeline is wired: all eleven stage components exist, but they are not ' +
-      'composed into a runStages(target) function. See src/cli/composition.mjs.',
-  );
-
-  /** @type {any} */ (error).code = 'ERR-PIPELINE-INCOMPLETE';
-
-  throw error;
 }
 
 /**

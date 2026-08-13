@@ -305,15 +305,38 @@ describe('the report passes the navigator through unchanged (VAL-01)', () => {
     expect(result.value.advertised_total).toBeNull();
   });
 
-  it('honours the cap without changing the stop reason', async () => {
+  it('reports cap_reached when OUR cap truncated the result', async () => {
     const { adapter } = build();
     const result = await adapter.harvest({ ...REQUEST, cap: 1 });
 
     expect(result.value.reviews).toHaveLength(1);
-    // The navigator decides why it stopped. Slicing here is our ceiling, not
-    // the source's, and rewriting the reason to `cap_reached` would claim the
-    // source ran out when it did not.
+    // This assertion originally read `target_reached`, on the reasoning that
+    // the navigator owns the stop reason and our cap is not the source's. The
+    // acquisition contract rejected it, and the contract is right: records were
+    // sliced away, so the harvest did NOT see everything. Reporting completion
+    // would let the reconciler treat the reviews beyond the cap as removed.
+    expect(result.value.stop_reason).toBe('cap_reached');
+  });
+
+  it('leaves the stop reason alone when the cap removed nothing', async () => {
+    // The other half. A cap that never bites must not relabel a complete
+    // harvest as capped — that would make coverage look permanently truncated
+    // and G-08 permanently noisy.
+    const { adapter } = build();
+    const result = await adapter.harvest({ ...REQUEST, cap: 50 });
+
+    expect(result.value.reviews).toHaveLength(2);
     expect(result.value.stop_reason).toBe('target_reached');
+  });
+
+  it('stamps the source onto every record', async () => {
+    // The extractor works from markup and cannot know which source produced
+    // it, but identity is derived from the source — so a record without one
+    // hashes differently depending on who filled the gap later.
+    const { adapter } = build();
+    const result = await adapter.harvest(REQUEST);
+
+    expect(result.value.reviews.every((/** @type {any} */ r) => r.source === 'google')).toBe(true);
   });
 
   it('carries diagnostics an incident needs, including the pack version', async () => {

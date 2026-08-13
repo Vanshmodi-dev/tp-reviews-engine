@@ -127,3 +127,56 @@ describe('components whose location differs from the TRD', () => {
     expect(deviations.map((component) => component.id).sort()).toEqual(['C-03', 'C-25']);
   });
 });
+
+describe('every acquisition adapter the engine claims is registered', () => {
+  /**
+   * The adapters, by the id each one reports.
+   *
+   * This list exists because the component audit MISSED `google:dom`. The TRD's
+   * numbered table names the browser session (C-09) and the navigator (C-10) —
+   * the adapter that composes them has no row, so it had nothing to be absent
+   * from, and it went unbuilt for the whole project while every part it needed
+   * shipped around it.
+   *
+   * A component with no row is invisible to a check that reads the rows.
+   */
+  const ADAPTER_IDS = [
+    'csv:file',
+    'google:dom',
+    'google:places-api',
+    'google:business-profile-api',
+  ];
+
+  it('registers exactly these ids in the composition root', async () => {
+    const { buildDependencies } = await import('../../src/cli/composition.mjs');
+    const deps = buildDependencies({ env: {} });
+
+    expect(Object.keys(deps.adapters).sort()).toEqual([...ADAPTER_IDS].sort());
+  });
+
+  it('gives each one the id it is registered under', async () => {
+    const { buildDependencies } = await import('../../src/cli/composition.mjs');
+    const deps = buildDependencies({ env: {} });
+
+    // The registry is keyed by each adapter's own `id`, so a mismatch here
+    // would mean the string in a payload's provenance block disagrees with the
+    // string the config selected — and "which adapter produced this?" stops
+    // being answerable.
+    for (const [key, adapter] of Object.entries(deps.adapters)) {
+      expect(adapter.id).toBe(key);
+    }
+  });
+
+  it('does not launch a browser to register the DOM adapter', async () => {
+    // Registering must be free. Most runs are CSV or API clients and never
+    // touch a page; an eager launch would add seconds and ~200 MB to every
+    // `plan`, `doctor` and `validate-config`, and would break those commands
+    // entirely on a machine with no Chromium installed.
+    const { buildDependencies } = await import('../../src/cli/composition.mjs');
+    const started = Date.now();
+
+    buildDependencies({ env: {} });
+
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+});

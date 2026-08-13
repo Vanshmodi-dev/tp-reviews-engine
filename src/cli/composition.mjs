@@ -37,11 +37,14 @@
 import { createEnricher } from '../app/enrich/index.mjs';
 import { createRunStages } from '../app/stages/run-stages.mjs';
 import { createCsvAdapter } from '../adapters/acquisition/file-csv/index.mjs';
+import { createDomAdapter } from '../adapters/acquisition/google-dom/index.mjs';
 import { createBusinessProfileAdapter } from '../adapters/acquisition/google-business-profile-api/index.mjs';
 import { createPlacesAdapter } from '../adapters/acquisition/google-places-api/index.mjs';
 import { createFilesystemPublisher } from '../adapters/publisher/filesystem.mjs';
 import { createGitState } from '../adapters/state/git-state.mjs';
-import { ERROR_CLASSES, SCHEMA_VERSION } from '../core/index.mjs';
+import { readFileSync } from 'node:fs';
+
+import { ERROR_CLASSES, SCHEMA_VERSION, loadPack } from '../core/index.mjs';
 import { createSystemClock } from '../infra/clock.mjs';
 import { createLogger } from '../infra/logger/jsonl.mjs';
 import { createRedactor } from '../infra/logger/redact.mjs';
@@ -112,7 +115,7 @@ export function buildDependencies(options = {}) {
 
   const state = createGitState({ root: options.stateRoot ?? '.state' });
   const publisher = createFilesystemPublisher({ root: options.dataRoot ?? '.publish' });
-  const adapters = adapterRegistry();
+  const adapters = adapterRegistry(options);
 
   return {
     env,
@@ -155,12 +158,92 @@ export function buildDependencies(options = {}) {
  *
  * @returns {Record<string, any>}
  */
-function adapterRegistry() {
+function adapterRegistry(options = {}) {
   // Keyed by each adapter's own `id`, so the registry cannot disagree with the
   // string that lands in a payload's provenance block.
-  const registered = [createCsvAdapter(), createPlacesAdapter(), createBusinessProfileAdapter()];
+  const registered = [
+    createCsvAdapter(),
+    createDomAdapter({ browser: lazyBrowser(options), pack: packResolver(options) }),
+    createPlacesAdapter(),
+    createBusinessProfileAdapter(),
+  ];
 
   return Object.fromEntries(registered.map((adapter) => [adapter.id, adapter]));
+}
+
+/**
+ * A browser that is launched on first use and never before.
+ *
+ * Registering the DOM adapter must not cost a Chromium launch. Most runs are
+ * CSV or API clients and never touch a page; launching eagerly would add
+ * seconds and ~200 MB to every `plan`, `doctor` and `validate-config`
+ * invocation, and would make a machine with no browser installed unable to run
+ * commands that need no browser.
+ *
+ * One browser per shard, reused across targets (BRW-01) — the launch is the
+ * expensive part, the per-target context is not.
+ *
+ * @param {any} options
+ * @returns {{ openTarget: (listing?: any) => Promise<any> }}
+ */
+function lazyBrowser(options) {
+  // The PROMISE is memoised, not the resolved browser. Two targets opening
+  // concurrently would both see a null browser and both launch one — the
+  // second silently orphaning the first, which then never closes and holds its
+  // memory for the life of the shard. Storing the in-flight promise makes the
+  // second caller await the first launch instead of starting another.
+  /** @type {Promise<any> | null} */
+  let launching = null;
+
+  const launch = async () => {
+    const { launchBrowser } = await import('../adapters/browser/playwright-chromium.mjs');
+
+    return launchBrowser({
+      allowedHosts: options.allowedHosts ?? ['google.com', 'gstatic.com', 'googleapis.com'],
+      ...(options.env?.TPRE_ENV === undefined ? {} : { environment: options.env.TPRE_ENV }),
+    });
+  };
+
+  return {
+    async openTarget(listing) {
+      launching ??= launch();
+
+      return (await launching).openTarget(listing);
+    },
+  };
+}
+
+/**
+ * Resolves the pinned selector pack for a source.
+ *
+ * Pinning lives in `profiles/` and nowhere else (TR-SEL-004) — not in a client
+ * config and not in code. This reads the pin and loads the named pack; it does
+ * not choose one, because "which selectors does this client use" must be
+ * answerable by reading one profile file.
+ *
+ * @param {any} options
+ * @returns {(source: string) => any}
+ */
+function packResolver(options) {
+  /** @type {Map<string, any>} */
+  const cache = new Map();
+
+  return (source) => {
+    if (cache.has(source)) return cache.get(source);
+
+    const version = options.selectorPacks?.[source];
+
+    if (typeof version !== 'string' || version === '') return null;
+
+    const loaded = loadPack(readFileSync(`selectors/${source}-maps/${version}.json`, 'utf8'), {
+      source,
+    });
+    const pack = loaded.ok === true ? loaded.value : null;
+
+    cache.set(source, pack);
+
+    return pack;
+  };
 }
 
 /**

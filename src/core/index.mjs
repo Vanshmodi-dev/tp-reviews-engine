@@ -204,3 +204,20 @@ export {
   resolved,
   shouldDeliver,
 } from './health/alerts.mjs';
+
+// ---------------------------------------------------------------------------
+// Added in SP-8, when `app/stages/` became the first consumer outside `core/`.
+//
+// DR-6 makes this barrel the ONLY legal route into the core, so a function the
+// pipeline needs has to appear here. Until stage 4 was composed, nothing
+// outside core/ called any of these — which is precisely how a hash function
+// with no production caller went unnoticed for nine phases.
+export { pinDate, resolveOrKeep } from './dates/pin.mjs';
+export { deriveAuthorKey } from './identity/author-key.mjs';
+export { deriveContentHash } from './identity/content-hash.mjs';
+export { deriveIdentityHash } from './identity/identity-hash.mjs';
+export { detectLanguage } from './lang/detect.mjs';
+export { normalize } from './normalize/index.mjs';
+export { shouldQuarantine, validateRecord } from './validate/record.mjs';
+export { computeQuarantineRate } from './validate/aggregate.mjs';
+export { REJECT as GATE_REJECT } from './gate/index.mjs';

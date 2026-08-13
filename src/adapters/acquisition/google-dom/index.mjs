@@ -238,30 +238,73 @@ function harvestOf(navigation, request, pack, logger) {
 
   reportQuarantine(quarantined, reviews.length, logger);
 
+  const cap = request.cap ?? Number.POSITIVE_INFINITY;
+  const capped = reviews.length > cap;
+
   return {
     ok: true,
     value: {
       adapter_id: 'google:dom',
-      reviews: reviews.slice(0, request.cap ?? Number.POSITIVE_INFINITY),
-      // Straight from the navigator. Not derived, not adjusted, not compared
-      // against `advertised_total` — see the module header.
-      stop_reason: navigation.stopReason,
+      reviews: stamped(reviews.slice(0, cap), request.listing?.source),
+      // From the navigator, with ONE adjustment: if our own cap truncated the
+      // result, the harvest is capped whatever the navigator thought.
+      //
+      // Passing `target_reached` through after slicing records away would tell
+      // the reconciler the harvest was complete when it demonstrably was not —
+      // absence would become evidence of removal, and the reviews beyond the
+      // cap would be tombstoned. This is the same reasoning that makes the
+      // Places adapter report `cap_reached` and never `target_reached`.
+      stop_reason: capped ? 'cap_reached' : navigation.stopReason,
       advertised_total: numberOrNull(navigation.advertisedTotal),
       advertised_rating: numberOrNull(navigation.advertisedRating),
       capabilities: DOM_CAPABILITIES,
-      diagnostics: {
-        rejected_rows: quarantined,
-        growth_curve: navigation.growthCurve,
-        iterations: navigation.iterations,
-        elapsed_ms: navigation.elapsedMs,
-        consent_state: navigation.consentState,
-        sort_applied: navigation.sortApplied,
-        stop_detail: navigation.stopDetail,
-        selector_pack_version: pack?.meta?.version ?? null,
-        counters: navigation.counters ?? null,
-      },
+      diagnostics: diagnosticsOf(navigation, quarantined, pack),
     },
   };
+}
+
+/**
+ * What an incident needs and a payload does not.
+ *
+ * Kept out of the report body because none of it is published — it goes to the
+ * run manifest, where somebody debugging a drift at 2 a.m. can see which
+ * strategies matched, how the feed grew, and which pack produced it.
+ *
+ * @param {any} navigation
+ * @param {ReadonlyArray<any>} quarantined
+ * @param {any} pack
+ * @returns {any}
+ */
+function diagnosticsOf(navigation, quarantined, pack) {
+  return {
+    rejected_rows: quarantined,
+    growth_curve: navigation.growthCurve,
+    iterations: navigation.iterations,
+    elapsed_ms: navigation.elapsedMs,
+    consent_state: navigation.consentState,
+    sort_applied: navigation.sortApplied,
+    stop_detail: navigation.stopDetail,
+    selector_pack_version: pack?.meta?.version ?? null,
+    counters: navigation.counters ?? null,
+  };
+}
+
+/**
+ * Stamps the source onto every record.
+ *
+ * The port requires each record to name its source. The extractor works from
+ * markup and has no idea which source produced it, and identity is derived
+ * from the source — so leaving it for a later stage to guess would make the
+ * hash depend on who filled the gap.
+ *
+ * @param {ReadonlyArray<any>} reviews
+ * @param {unknown} source
+ * @returns {any[]}
+ */
+function stamped(reviews, source) {
+  const name = typeof source === 'string' && source !== '' ? source : 'google';
+
+  return reviews.map((record) => ({ ...record, source: name }));
 }
 
 /**

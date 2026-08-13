@@ -6,6 +6,10 @@ A reusable, zero-recurring-cost platform that keeps client websites synchronised
 with their published customer reviews — without paid widgets, and without the
 website ever contacting a review source.
 
+> **Running this, onboarding a client, or picking it up cold?**
+> Start with [STATUS.md](STATUS.md) — what it does, how to run it, how to
+> configure a client, and every outstanding manual task in one place.
+
 ---
 
 ## Status

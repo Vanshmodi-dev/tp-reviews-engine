@@ -351,10 +351,16 @@ describe('SCHED-02 / TR-APP-003 — no client is permanently first', () => {
 });
 
 describe('DEL-69 — the seven preflight checks, in order', () => {
+  // SAD §15.6's five fields. This fixture previously read
+  // `{ authorized_by, authorized_at, evidence }` — a shape the specification
+  // never defined and that V-3 did not recognise, so these tests passed while
+  // asserting a control that no real config could satisfy.
   const AUTHORISED = {
     authorized_by: 'ops',
-    authorized_at: '2026-01-01',
-    evidence: 'ticket-9',
+    authorization_date: '2026-01-01',
+    relationship: 'owner',
+    evidence_ref: 'compliance/authorizations/ops.md',
+    scope_ack: true,
   };
 
   /**
@@ -448,8 +454,10 @@ describe('DEL-69 — the seven preflight checks, in order', () => {
         input({ config: { enabled: true, authorization: { authorized_by: 'ops' } } }),
       );
 
-      expect(verdict.reasons.at(-1)?.detail).toContain('authorized_at');
-      expect(verdict.reasons.at(-1)?.detail).toContain('evidence');
+      expect(verdict.reasons.at(-1)?.detail).toContain('authorization_date');
+      expect(verdict.reasons.at(-1)?.detail).toContain('evidence_ref');
+      expect(verdict.reasons.at(-1)?.detail).toContain('relationship');
+      expect(verdict.reasons.at(-1)?.detail).toContain('scope_ack');
     });
   });
 

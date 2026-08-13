@@ -28,6 +28,7 @@ import { readFile } from 'node:fs/promises';
 import { writeFileAtomic } from '../../infra/fs-atomic.mjs';
 import { readJsonFile } from '../../infra/json-file.mjs';
 import { dataPaths } from './paths.mjs';
+import { artifactUnchanged } from './unchanged.mjs';
 
 /**
  * @param {{ root: string }} options
@@ -52,7 +53,7 @@ export function createFilesystemPublisher({ root }) {
       for (const [name, artifact] of Object.entries(artifacts)) {
         const path = paths.artifact(clientSlug, listingKey, kebab(name));
 
-        if (await bytesUnchanged(path, artifact.bytes)) {
+        if (await unchangedOnDisk(path, artifact)) {
           skipped.push(path);
           continue;
         }
@@ -93,13 +94,19 @@ export function createFilesystemPublisher({ root }) {
 }
 
 /**
+ * Compares by SEALED CONTENT HASH, not by raw bytes.
+ *
+ * Raw bytes include `generated_at` and therefore differ on every run, which
+ * made the skip unreachable and every run rewrite every artifact (IR-06). See
+ * `unchanged.mjs`.
+ *
  * @param {string} path
- * @param {string} bytes
+ * @param {{ bytes: string, contentHash?: string }} artifact
  * @returns {Promise<boolean>}
  */
-async function bytesUnchanged(path, bytes) {
+async function unchangedOnDisk(path, artifact) {
   try {
-    return (await readFile(path, 'utf8')) === bytes;
+    return artifactUnchanged(await readFile(path, 'utf8'), artifact);
   } catch {
     // Unreadable or absent both mean "we cannot claim it is unchanged", so the
     // write proceeds. Erring towards writing is right here: the cost is a

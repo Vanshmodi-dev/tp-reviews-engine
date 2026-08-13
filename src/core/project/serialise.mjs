@@ -85,7 +85,25 @@ export function serialiseLedger(ledger) {
  */
 export function hashableBytes(payload) {
   const projection = { ...payload };
+
   delete projection.generated_at;
+
+  // `stats.last_full_harvest_at` has exactly the property described above: it
+  // advances on every successful full harvest whether or not one review
+  // changed. It was added after this rule was written, and because the rule
+  // named a single field rather than a class of them, it was not covered —
+  // so hash gating never suppressed anything once the pipeline was wired end
+  // to end, and the second identical run rewrote every artifact (IR-06, MS-7).
+  //
+  // It stays in the PUBLISHED bytes, where a consumer can read it. It is only
+  // excluded from the HASHED bytes, which is the distinction this whole module
+  // exists to keep.
+  if (projection.stats !== null && typeof projection.stats === 'object') {
+    const stats = { .../** @type {Record<string, unknown>} */ (projection.stats) };
+
+    delete stats.last_full_harvest_at;
+    projection.stats = stats;
+  }
 
   return serialisePayload(projection);
 }

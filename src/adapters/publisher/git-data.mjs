@@ -41,6 +41,7 @@ import { relative as relativeTo } from 'node:path';
 import { writeFileAtomic } from '../../infra/fs-atomic.mjs';
 import { commitMessage, createGit } from '../../infra/git.mjs';
 import { dataPaths } from './paths.mjs';
+import { artifactUnchanged } from './unchanged.mjs';
 
 /**
  * @param {object} options
@@ -78,7 +79,7 @@ export function createGitDataPublisher({ root, remote = 'origin', branch = 'data
         const path = relativeTo(root, absolute).replaceAll('\\', '/');
         const bytes = /** @type {any} */ (artifact).bytes;
 
-        if (await unchanged(absolute, bytes)) {
+        if (await unchanged(absolute, artifact)) {
           skipped.push(path);
           continue;
         }
@@ -150,13 +151,14 @@ export function createGitDataPublisher({ root, remote = 'origin', branch = 'data
  * second definition of sameness that can drift from the first.
  *
  * @param {string} absolute
- * @param {string} bytes
+ * @param {{ bytes: string, contentHash?: string }} artifact
  * @returns {Promise<boolean>}
  */
-async function unchanged(absolute, bytes) {
-  const current = await readOrNull(absolute);
-
-  return current !== null && current === bytes;
+async function unchanged(absolute, artifact) {
+  // By sealed content hash, not raw bytes: raw bytes carry `generated_at` and
+  // differ on every run, so this comparison was never true and hash gating
+  // never skipped anything (IR-06). See `unchanged.mjs`.
+  return artifactUnchanged(await readOrNull(absolute), artifact);
 }
 
 /**

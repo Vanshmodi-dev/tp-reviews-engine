@@ -212,17 +212,29 @@ function defined(values) {
 /**
  * The default pipeline: a stated gap, not a silent success.
  *
- * Stage 1 (Resolve, §2.8) has no implementation. A default that returned an
- * empty report would make every target succeed with zero reviews — which the
- * Gate would then correctly reject as a count drop, producing an alert about
- * the wrong thing entirely.
+ * A default that returned an empty report would make every target succeed with
+ * zero reviews — which the Gate would then correctly reject as a count drop,
+ * producing an alert about the wrong thing entirely.
+ *
+ * **What is actually missing, as of SP-8 hardening.** Every one of the eleven
+ * stages now exists as a component: C-08 (the Listing Resolver) was built in
+ * SP-8 after the deliverable audit found it had been skipped in PH-16, and
+ * C-20 (the Enricher) with it. What has never been written is the COMPOSITION —
+ * a `runStages(target)` that threads resolve → navigate → extract → normalise →
+ * validate → reconcile → enrich → project → gate → publish together with one
+ * context.
+ *
+ * That is integration work, not a missing part, and it is the last thing
+ * between this engine and a live harvest. Naming it precisely here matters:
+ * this message is what an operator reads when a dispatch fails, and it named
+ * C-08 for four phases after C-08 stopped being the reason.
  *
  * @returns {Promise<never>}
  */
 async function notImplemented() {
   const error = new Error(
-    'no acquisition pipeline is wired: the Listing Resolver (C-08, stage 1) is not implemented, ' +
-      'so a target cannot be taken through the eleven stages yet',
+    'no acquisition pipeline is wired: all eleven stage components exist, but they are not ' +
+      'composed into a runStages(target) function. See src/cli/composition.mjs.',
   );
 
   /** @type {any} */ (error).code = 'ERR-PIPELINE-INCOMPLETE';

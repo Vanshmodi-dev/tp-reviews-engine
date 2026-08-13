@@ -112,11 +112,15 @@ describe('V-3 — the compliance gate (TR-CFG-041)', () => {
     ...(authorization === undefined ? {} : { authorization }),
   });
 
+  // SAD §15.6's five fields. This fixture previously used four invented names
+  // and omitted `relationship` entirely, so every assertion below was checking
+  // a vocabulary the specification never defined.
   const complete = {
-    granted_by: 'Dana Smith, Practice Manager',
-    granted_at: '2026-01-15',
-    evidence_url: 'https://example.test/authorisation.pdf',
-    scope: 'google review display on acmedental.test',
+    authorized_by: 'Dana Smith, Practice Manager',
+    authorization_date: '2026-01-15',
+    relationship: 'owner',
+    evidence_ref: 'compliance/authorizations/acme-dental.md',
+    scope_ack: true,
   };
 
   it('BLOCKS a DOM adapter with no authorization block at all', () => {
@@ -137,15 +141,15 @@ describe('V-3 — the compliance gate (TR-CFG-041)', () => {
   });
 
   it('blocks a partially complete block, naming what is missing', () => {
-    const { evidence_url: _omitted, ...partial } = complete;
+    const { evidence_ref: _omitted, ...partial } = complete;
     const findings = validateSemantics(config({ listings: [domListing(partial)] }));
 
-    expect(forRule(findings, 'V-3')[0].message).toContain('evidence_url');
+    expect(forRule(findings, 'V-3')[0].message).toContain('evidence_ref');
   });
 
   it('treats an empty string as missing', () => {
     const findings = validateSemantics(
-      config({ listings: [domListing({ ...complete, granted_by: '   ' })] }),
+      config({ listings: [domListing({ ...complete, authorized_by: '   ' })] }),
     );
 
     expect(forRule(findings, 'V-3')).toHaveLength(1);
@@ -157,6 +161,38 @@ describe('V-3 — the compliance gate (TR-CFG-041)', () => {
     );
 
     expect(forRule(findings, 'V-3')).toEqual([]);
+  });
+
+  it('BLOCKS a relationship the SAD does not permit (CON-22)', () => {
+    // The case the gate exists for. Every other field can be perfectly filled
+    // in for a listing the client neither owns nor represents — a competitor's
+    // — and until PH-25 nothing in the system looked at this field.
+    const findings = validateSemantics(
+      config({ listings: [domListing({ ...complete, relationship: 'competitor' })] }),
+    );
+
+    expect(forRule(findings, 'V-3')).toHaveLength(1);
+    expect(forRule(findings, 'V-3')[0].message).toContain('owner | authorized_agent');
+    expect(blocks(findings)).toBe(true);
+  });
+
+  it('ACCEPTS an authorized_agent, the other permitted relationship', () => {
+    const findings = validateSemantics(
+      config({ listings: [domListing({ ...complete, relationship: 'authorized_agent' })] }),
+    );
+
+    expect(forRule(findings, 'V-3')).toEqual([]);
+  });
+
+  it('treats scope_ack: false as a refusal, not as a present value', () => {
+    // It is a boolean acknowledgement. A string-presence check would have read
+    // `false` as filled in, which inverts what the field means.
+    const findings = validateSemantics(
+      config({ listings: [domListing({ ...complete, scope_ack: false })] }),
+    );
+
+    expect(forRule(findings, 'V-3')).toHaveLength(1);
+    expect(forRule(findings, 'V-3')[0].message).toContain('scope_ack');
   });
 
   it('does not apply to adapters that read no rendered pages', () => {

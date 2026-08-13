@@ -39,8 +39,39 @@ const DOM_ADAPTERS = Object.freeze(['google:dom']);
 /** Above this, the gate tolerates losing more than half a client's reviews. */
 const SANE_COUNT_DROP_CEILING = 0.5;
 
-/** Fields an authorisation block must all carry to count as complete. */
-const AUTHORISATION_FIELDS = Object.freeze(['granted_by', 'granted_at', 'evidence_url', 'scope']);
+/**
+ * The authorisation block, exactly as SAD §15.6 and TRD §72.4 define it.
+ *
+ * These names are normative and are not ours to choose. They previously read
+ * `granted_by`, `granted_at`, `evidence_url`, `scope` — four invented names,
+ * with `relationship` absent altogether — which meant the canonical client
+ * config printed in TRD §72 was REJECTED by this rule, and a config that
+ * satisfied this rule was in turn rejected by the preflight's check 4, which
+ * had invented a third set. No config could satisfy both, so no DOM client
+ * could be onboarded at all.
+ *
+ * `src/app/preflight.mjs` imports this list rather than restating it, and
+ * `tests/unit/config/authorisation-contract.test.mjs` asserts both against the
+ * spec. A shared constant is what stops the two drifting apart again.
+ */
+export const AUTHORISATION_FIELDS = Object.freeze([
+  'authorized_by',
+  'authorization_date',
+  'relationship',
+  'evidence_ref',
+  'scope_ack',
+]);
+
+/**
+ * The only two relationships that permit harvesting (SAD §15.6: "no other
+ * value permitted").
+ *
+ * This is CON-22 as a mechanism — only listings the client owns or represents
+ * may be harvested. It was the field most worth having and the one that was
+ * missing, so the constraint the whole legal position rests on was, until now,
+ * not checked anywhere in the system.
+ */
+export const AUTHORISED_RELATIONSHIPS = Object.freeze(['owner', 'authorized_agent']);
 
 /**
  * @typedef {object} Finding
@@ -152,26 +183,59 @@ function ruleAuthorisationForDomAdapters(config) {
     if (!DOM_ADAPTERS.includes(listing.adapter)) continue;
 
     const authorisation = listing.authorization ?? config.authorization;
-    const missing =
-      authorisation === undefined || authorisation === null
-        ? [...AUTHORISATION_FIELDS]
-        : AUTHORISATION_FIELDS.filter((field) => !isPresent(authorisation[field]));
+    const missing = missingAuthorisationFields(authorisation);
 
-    if (missing.length === 0) continue;
+    if (missing.length > 0) {
+      findings.push(
+        finding(
+          'V-3',
+          'error',
+          `listing "${listing.key}" uses ${listing.adapter} but its authorization block is ` +
+            `missing: ${missing.join(', ')}. Reading a source's rendered pages on a client's ` +
+            `behalf requires their written authorisation, and this rule is the mechanism that ` +
+            `guarantees it rather than hoping for it (TR-CFG-041).`,
+        ),
+      );
 
-    findings.push(
-      finding(
-        'V-3',
-        'error',
-        `listing "${listing.key}" uses ${listing.adapter} but its authorization block is ` +
-          `missing: ${missing.join(', ')}. Reading a source's rendered pages on a client's ` +
-          `behalf requires their written authorisation, and this rule is the mechanism that ` +
-          `guarantees it rather than hoping for it (TR-CFG-041).`,
-      ),
-    );
+      continue;
+    }
+
+    const relationship = authorisation['relationship'];
+
+    if (!AUTHORISED_RELATIONSHIPS.includes(relationship)) {
+      findings.push(
+        finding(
+          'V-3',
+          'error',
+          `listing "${listing.key}" declares relationship "${relationship}", which is not one ` +
+            `of ${AUTHORISED_RELATIONSHIPS.join(' | ')} (SAD §15.6: no other value permitted). ` +
+            `This field is CON-22 as a mechanism — harvesting a listing the client neither ` +
+            `owns nor represents is the one failure here that no amount of correct code fixes.`,
+        ),
+      );
+    }
   }
 
   return findings;
+}
+
+/**
+ * Which of the five normative fields are absent or empty.
+ *
+ * `scope_ack` is checked separately because it is a BOOLEAN acknowledgement,
+ * not a string (TRD §72's canonical config sets it to `true`). Running it
+ * through the string check would have accepted `false` — an explicit refusal
+ * to acknowledge scope — as a present value, which inverts the field's meaning.
+ *
+ * @param {any} authorisation
+ * @returns {string[]}
+ */
+function missingAuthorisationFields(authorisation) {
+  if (authorisation === undefined || authorisation === null) return [...AUTHORISATION_FIELDS];
+
+  return AUTHORISATION_FIELDS.filter((field) =>
+    field === 'scope_ack' ? authorisation[field] !== true : !isPresent(authorisation[field]),
+  );
 }
 
 /** V-4 — declared secrets must exist in the environment at run time. */

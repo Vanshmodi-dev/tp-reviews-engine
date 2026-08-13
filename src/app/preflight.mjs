@@ -40,6 +40,8 @@
  * @module app/preflight
  */
 
+import { AUTHORISATION_FIELDS, AUTHORISED_RELATIONSHIPS } from './config/semantic.mjs';
+
 /**
  * @typedef {object} PolicyReason
  * @property {number} check       1…7.
@@ -160,13 +162,36 @@ const CHECKS = Object.freeze([
       }
 
       const record = input.config?.authorization ?? {};
-      const missing = ['authorized_by', 'authorized_at', 'evidence'].filter(
-        (field) => typeof record[field] !== 'string' || record[field].trim() === '',
+      // The SAME five fields V-3 checks, imported rather than restated. This
+      // list previously read `authorized_by, authorized_at, evidence` — a third
+      // invented set, agreeing with neither the spec nor V-3, so a config that
+      // passed validation was denied at preflight and vice versa.
+      const missing = AUTHORISATION_FIELDS.filter((field) =>
+        field === 'scope_ack'
+          ? record[field] !== true
+          : typeof record[field] !== 'string' || record[field].trim() === '',
       );
 
-      return missing.length === 0
-        ? { passed: true, detail: `authorised by ${record.authorized_by}` }
-        : { passed: false, detail: `the authorisation record is missing: ${missing.join(', ')}` };
+      if (missing.length > 0) {
+        return {
+          passed: false,
+          detail: `the authorisation record is missing: ${missing.join(', ')}`,
+        };
+      }
+
+      // CON-22. Checked here as well as in V-3 because they answer different
+      // questions: V-3 asks "may this merge", preflight asks "may this run" —
+      // and a config can reach production through a path that never re-ran
+      // validate-config.
+      return AUTHORISED_RELATIONSHIPS.includes(record['relationship'])
+        ? {
+            passed: true,
+            detail: `authorised by ${record.authorized_by} as ${record.relationship}`,
+          }
+        : {
+            passed: false,
+            detail: `relationship "${record.relationship}" is not one of ${AUTHORISED_RELATIONSHIPS.join(' | ')}`,
+          };
     },
   },
   {

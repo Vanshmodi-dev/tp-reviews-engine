@@ -99,7 +99,7 @@ jobs:
       - name: Size budgets
         run: |
           npm run size
-          npx vitest run tests/budgets --passWithNoTests
+          npx vitest run --project budgets --passWithNoTests
 
       # --- 10. schemas ----------------------------------------------------
       # EDR-039: a published JSON Schema is the runtime authority and beats all

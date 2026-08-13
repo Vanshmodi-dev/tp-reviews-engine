@@ -137,16 +137,47 @@ describe('a target goes through every stage and reaches disk', () => {
   });
 });
 
-describe('a second identical run', () => {
-  it('reconciles to the same three records, inserting nothing', async () => {
-    await deps.runStages(target);
+describe('MS-7 — a second identical run writes nothing (FR-065, IR-06)', () => {
+  /** @type {any} */
+  let second;
 
+  it('skips every artifact', async () => {
+    second = await deps.runStages(target);
+
+    // The headline exit criterion of PH-18, and it did not hold until the hash
+    // gating was fixed: both publishers compared RAW bytes, which carry
+    // `generated_at` and `stats.last_full_harvest_at`. Both advance every run
+    // by construction, so nothing was ever equal and every run rewrote every
+    // artifact for every client — the `data` branch growing with traffic
+    // rather than with change.
+    expect(second.publish.written).toEqual([]);
+    expect(second.publish.skipped).toHaveLength(4);
+  });
+
+  it('still reconciles to the same three records', async () => {
     const read = await deps.state.readLedger('e2e-client', 'main');
 
-    // The identity hashes are content-derived, so an unchanged source must
-    // reconcile to exactly the same records. Any growth here would mean the
-    // same reviews were being seen as new ones every run — the churn that
-    // makes a ledger useless.
+    // Identity is content-derived, so an unchanged source must reconcile to
+    // exactly the same records. Growth here would mean the same reviews were
+    // being seen as new every run.
     expect(read.value.records.size).toBe(3);
+  });
+});
+
+describe('a run with a real change still publishes', () => {
+  it('writes when a review is added', async () => {
+    // The other half of the guarantee, and the one that makes the test above
+    // meaningful: a gate that skips everything would also pass it.
+    writeFileSync(
+      join(root, 'in', 'reviews.csv'),
+      `${CSV}Nia K.,5,2026-08-01,Excellent and very tidy work throughout.
+`,
+      'utf8',
+    );
+
+    const third = await deps.runStages(target);
+
+    expect(third.publish.written).toHaveLength(4);
+    expect(third.report.observed_count).toBe(4);
   });
 });

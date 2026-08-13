@@ -40,6 +40,18 @@ export default defineConfig({
             // Same reasoning as `live`, different resource: a project per
             // requirement, so the fast deterministic suite stays both.
             'tests/integration/browser-*.test.mjs',
+            // SP-8, same reasoning as the line above, third resource.
+            // `tests/budgets/` measures a RATIO of two timings taken moments
+            // apart. Vitest runs test FILES in parallel workers, so any
+            // I/O-heavy file in the same project distorts that ratio — the
+            // CSV end-to-end test writes real payloads to a real filesystem
+            // and tipped `reconcile.performance` from passing to failing
+            // without touching a line of reconciler code.
+            //
+            // The budget is NOT relaxed and the tests are NOT skipped: they
+            // run as their own project, and `ci.yml` already invoked them in a
+            // separate step, so nothing is lost from the blocking path.
+            'tests/budgets/**',
             '**/node_modules/**',
           ],
           environment: 'node',
@@ -70,6 +82,17 @@ export default defineConfig({
           globals: false,
           // Launching and tearing down a browser per case is seconds, not
           // milliseconds, and the lifecycle suite opens several.
+          testTimeout: 60_000,
+        },
+      },
+      {
+        test: {
+          // Timing ratios, isolated from anything that competes for CPU or
+          // disk. Blocking in CI (`npm run test:budgets`).
+          name: 'budgets',
+          include: ['tests/budgets/**/*.test.mjs'],
+          environment: 'node',
+          globals: false,
           testTimeout: 60_000,
         },
       },
